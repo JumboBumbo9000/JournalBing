@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JournalBing</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: eine schmale Lesespalte; oben Suche und Filter, darunter Ergebniskarten, die sich erst auf Wunsch aufklappen. */
+:root {
+  --bg: #f3f6f7;
+  --surface: #ffffff;
+  --fg: #14232b;
+  --muted: #5a6b73;
+  --line: #d6e0e4;
+  --accent: #0b6e84;
+  --accent-fg: #ffffff;
+  --oa: #17784a;
+  --oa-bg: #e0f3e8;
+  --closed: #5a6b73;
+  --closed-bg: #e8edef;
+  --warn: #9a3412;
+  --warn-bg: #fdeadd;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1a1f;
+    --surface: #17262d;
+    --fg: #e3edf0;
+    --muted: #93a6ae;
+    --line: #2a3d46;
+    --accent: #5bc0d6;
+    --accent-fg: #07222a;
+    --oa: #6fd39d;
+    --oa-bg: #17382a;
+    --closed: #93a6ae;
+    --closed-bg: #22343c;
+    --warn: #f4a972;
+    --warn-bg: #3a2616;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1a1f;
+  --surface: #17262d;
+  --fg: #e3edf0;
+  --muted: #93a6ae;
+  --line: #2a3d46;
+  --accent: #5bc0d6;
+  --accent-fg: #07222a;
+  --oa: #6fd39d;
+  --oa-bg: #17382a;
+  --closed: #93a6ae;
+  --closed-bg: #22343c;
+  --warn: #f4a972;
+  --warn-bg: #3a2616;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(20px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+h1 { font-family: var(--font-head); font-size: 1.75rem; line-height: 1.15; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: 0.95rem; }
+
+form.search { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 8px; }
+input[type="search"], select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 12px;
+  min-width: 0;
+}
+input[type="search"] { flex: 1; font-size: 1rem; }
+button { font: inherit; cursor: pointer; }
+button.primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-weight: 600;
+}
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.filters { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; font-size: 0.9rem; color: var(--muted); }
+.filters label { display: flex; align-items: center; gap: 6px; }
+.filters select { padding: 7px 10px; font-size: 0.9rem; }
+.filters input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.9rem; color: var(--muted); }
+.chip {
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.9rem;
+}
+
+.status { color: var(--muted); font-size: 0.9rem; min-height: 1.4em; }
+.error { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; }
+
+.results { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; list-style: none; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.card h2 { font-family: var(--font-head); font-size: 1.08rem; line-height: 1.3; margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.card h2 a { color: inherit; text-decoration: none; }
+.card h2 a:hover { text-decoration: underline; }
+.authors { color: var(--muted); font-size: 0.9rem; overflow-wrap: anywhere; }
+.authors b { color: var(--fg); font-weight: 600; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 0.85rem; color: var(--muted); }
+.meta .num { font-variant-numeric: tabular-nums; color: var(--fg); font-weight: 600; }
+.badge { border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600; }
+.badge.oa { background: var(--oa-bg); color: var(--oa); }
+.badge.closed { background: var(--closed-bg); color: var(--closed); }
+.badge.pre { background: var(--warn-bg); color: var(--warn); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.actions a { color: var(--accent); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+.actions a:hover { text-decoration: underline; }
+button.toggle {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.abstract { font-size: 0.95rem; line-height: 1.6; max-width: 65ch; border-top: 1px solid var(--line); padding-top: 10px; overflow-wrap: anywhere; }
+.abstract.none { color: var(--muted); font-style: italic; }
+
+button.more { align-self: center; background: var(--surface); color: var(--accent); border: 1px solid var(--line); border-radius: 8px; padding: 11px 22px; font-weight: 600; }
+button.more[disabled] { opacity: 0.6; cursor: default; }
+footer { color: var(--muted); font-size: 0.8rem; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color 0.15s; } .card:hover { border-color: var(--accent); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>JournalBing</h1>
+    <p class="sub">Aktuelle Paper zu deinem Thema, mit Open-Access-Status, Zitationen und Abstract.</p>
+  </header>
+
+  <form class="search" id="form" autocomplete="off">
+    <div class="row">
+      <input type="search" id="q" placeholder="Thema, z. B. cellular senescence" aria-label="Suchbegriff" enterkeyhint="search">
+      <button class="primary" type="submit">Suchen</button>
+    </div>
+    <div class="filters">
+      <label><input type="checkbox" id="oa" checked> Nur Open Access</label>
+      <label><input type="checkbox" id="pre"> Preprints einbeziehen</label>
+      <label>Zeitraum
+        <select id="period">
+          <option value="0">Alle</option>
+          <option value="1">Letztes Jahr</option>
+          <option value="3" selected>Letzte 3 Jahre</option>
+          <option value="5">Letzte 5 Jahre</option>
+        </select>
+      </label>
+      <label>Sortierung
+        <select id="sort">
+          <option value="publication_date:desc" selected>Neueste zuerst</option>
+          <option value="cited_by_count:desc">Meistzitiert</option>
+          <option value="relevance_score:desc">Beste Treffer</option>
+        </select>
+      </label>
+    </div>
+  </form>
+
+  <div class="examples" id="examples">
+    <span>Zum Ausprobieren:</span>
+  </div>
+
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+  <ol class="results" id="results"></ol>
+  <button class="more" id="more" type="button" hidden>Mehr laden</button>
+
+  <footer>Daten: OpenAlex (api.openalex.org). Zitationszahlen und Open-Access-Status können von anderen Datenbanken abweichen.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var API = "https://api.openalex.org/works";
+  var PER_PAGE = 20;
+  var SELECT = [
+    "id", "doi", "title", "display_name", "type", "publication_date", "publication_year",
+    "cited_by_count", "open_access", "authorships", "primary_location", "best_oa_location",
+    "abstract_inverted_index"
+  ].join(",");
+
+  var $ = function (id) { return document.getElementById(id); };
+  var form = $("form"), qEl = $("q"), oaEl = $("oa"), preEl = $("pre");
+  var periodEl = $("period"), sortEl = $("sort");
+  var statusEl = $("status"), resultsEl = $("results"), moreEl = $("more"), examplesEl = $("examples");
+
+  var state = { page: 1, total: 0, shown: 0, loading: false, query: "" };
+
+  // ---------- reine Hilfsfunktionen ----------
+
+  function rebuildAbstract(index) {
+    if (!index) return "";
+    var words = [];
+    Object.keys(index).forEach(function (word) {
+      index[word].forEach(function (pos) { words[pos] = word; });
+    });
+    return words.filter(function (w) { return w !== undefined; }).join(" ");
+  }
+
+  function dateDaysBack(years) {
+    var d = new Date();
+    d.setFullYear(d.getFullYear() - years);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function buildUrl(page) {
+    var filters = [];
+    filters.push("type:" + (preEl.checked ? "article|review|preprint" : "article|review"));
+    if (oaEl.checked) filters.push("is_oa:true");
+    var years = parseInt(periodEl.value, 10);
+    if (years > 0) filters.push("from_publication_date:" + dateDaysBack(years));
+    var params = [
+      "search=" + encodeURIComponent(state.query),
+      "filter=" + filters.join(","),
+      "sort=" + sortEl.value,
+      "per-page=" + PER_PAGE,
+      "page=" + page,
+      "select=" + SELECT
+    ];
+    return API + "?" + params.join("&");
+  }
+
+  function citationsPerYear(work) {
+    var now = new Date();
+    var pub = work.publication_date ? new Date(work.publication_date) : null;
+    if (!pub || isNaN(pub.getTime())) return null;
+    var years = (now - pub) / (365.25 * 24 * 3600 * 1000);
+    years = Math.max(years, 1);
+    return work.cited_by_count / years;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "";
+    var p = iso.split("-");
+    if (p.length !== 3) return iso;
+    return p[2] + "." + p[1] + "." + p[0];
+  }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+
+  // ---------- Darstellung ----------
+
+  function authorsLine(work) {
+    var list = work.authorships || [];
+    var box = el("div", "authors");
+    if (!list.length) { box.textContent = "Keine Autorenangabe"; return box; }
+    var name = function (a) { return (a && a.author && a.author.display_name) || "Unbekannt"; };
+    var first = list[0];
+    var last = list.length > 1 ? list[list.length - 1] : null;
+
+    var b1 = el("b", null, name(first));
+    box.appendChild(b1);
+    if (last) {
+      box.appendChild(document.createTextNode(" (Erstautor) · "));
+      box.appendChild(el("b", null, name(last)));
+      box.appendChild(document.createTextNode(" (Letztautor)"));
+      if (list.length > 2) box.appendChild(document.createTextNode(" · +" + (list.length - 2) + " weitere"));
+    }
+    return box;
+  }
+
+  function renderWork(work) {
+    var li = el("li", "card");
+    var title = work.display_name || work.title || "(ohne Titel)";
+    var doiUrl = work.doi || null;
+    var oa = work.open_access || {};
+    var bestOa = work.best_oa_location || {};
+    var primary = work.primary_location || {};
+    var landing = bestOa.landing_page_url || primary.landing_page_url || doiUrl || work.id;
+
+    var h = el("h2");
+    var a = el("a", null, title);
+    a.href = landing;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    h.appendChild(a);
+    li.appendChild(h);
+
+    li.appendChild(authorsLine(work));
+
+    var meta = el("div", "meta");
+    var journal = primary.source && primary.source.display_name;
+    if (journal) meta.appendChild(el("span", null, journal));
+    if (work.publication_date) meta.appendChild(el("span", null, formatDate(work.publication_date)));
+
+    if (work.type === "preprint") meta.appendChild(el("span", "badge pre", "Preprint"));
+    meta.appendChild(el("span", oa.is_oa ? "badge oa" : "badge closed", oa.is_oa ? "Open Access" : "Kein freier Zugang"));
+
+    var cit = el("span");
+    cit.appendChild(el("span", "num", String(work.cited_by_count || 0)));
+    cit.appendChild(document.createTextNode(" Zitationen"));
+    var cpy = citationsPerYear(work);
+    if (cpy !== null) cit.appendChild(document.createTextNode(" (" + cpy.toFixed(1).replace(".", ",") + " pro Jahr)"));
+    meta.appendChild(cit);
+    li.appendChild(meta);
+
+    var actions = el("div", "actions");
+    var btn = el("button", "toggle", "Abstract anzeigen");
+    btn.type = "button";
+    btn.setAttribute("aria-expanded", "false");
+    actions.appendChild(btn);
+
+    if (bestOa.pdf_url) {
+      var pdf = el("a", null, "PDF");
+      pdf.href = bestOa.pdf_url; pdf.target = "_blank"; pdf.rel = "noopener noreferrer";
+      actions.appendChild(pdf);
+    }
+    if (doiUrl) {
+      var doi = el("a", null, "DOI");
+      doi.href = doiUrl; doi.target = "_blank"; doi.rel = "noopener noreferrer";
+      actions.appendChild(doi);
+    }
+    li.appendChild(actions);
+
+    var abs = el("div", "abstract");
+    abs.hidden = true;
+    var text = rebuildAbstract(work.abstract_inverted_index);
+    if (text) { abs.textContent = text; }
+    else { abs.className = "abstract none"; abs.textContent = "Für dieses Paper ist in OpenAlex kein Abstract hinterlegt. Der Link zur Originalseite zeigt ihn meist trotzdem."; }
+    li.appendChild(abs);
+
+    btn.addEventListener("click", function () {
+      var open = abs.hidden;
+      abs.hidden = !open;
+      btn.textContent = open ? "Abstract ausblenden" : "Abstract anzeigen";
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    return li;
+  }
+
+  function setStatus(msg) { statusEl.textContent = msg; }
+
+  function showError(msg) {
+    var box = el("div", "error", msg);
+    resultsEl.innerHTML = "";
+    var li = document.createElement("li");
+    li.appendChild(box);
+    resultsEl.appendChild(li);
+  }
+
+  // ---------- Suche ----------
+
+  function load(page, append) {
+    if (state.loading) return;
+    state.loading = true;
+    moreEl.disabled = true;
+    setStatus("Suche läuft …");
+
+    fetch(buildUrl(page))
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        var works = data.results || [];
+        if (!append) { resultsEl.innerHTML = ""; state.shown = 0; }
+        state.total = (data.meta && data.meta.count) || 0;
+        works.forEach(function (w) { resultsEl.appendChild(renderWork(w)); });
+        state.shown += works.length;
+        state.page = page;
+
+        if (!state.total) setStatus("Keine Treffer. Versuch einen allgemeineren Begriff oder lockere die Filter.");
+        else setStatus(state.shown + " von " + state.total.toLocaleString("de-DE") + " Treffern angezeigt");
+        moreEl.hidden = state.shown >= state.total || works.length === 0;
+      })
+      .catch(function (err) {
+        if (!append) showError("Die Suche hat nicht geklappt (" + err.message + "). Prüfe deine Internetverbindung und versuch es noch einmal.");
+        else setStatus("Weitere Treffer konnten nicht geladen werden. Versuch es noch einmal.");
+      })
+      .then(function () {
+        state.loading = false;
+        moreEl.disabled = false;
+      });
+  }
+
+  function startSearch() {
+    var q = qEl.value.trim();
+    if (!q) { setStatus("Gib zuerst ein Thema ein."); return; }
+    state.query = q;
+    moreEl.hidden = true;
+    load(1, false);
+  }
+
+  form.addEventListener("submit", function (e) { e.preventDefault(); startSearch(); });
+  moreEl.addEventListener("click", function () { load(state.page + 1, true); });
+  [oaEl, preEl, periodEl, sortEl].forEach(function (c) {
+    c.addEventListener("change", function () { if (state.query) startSearch(); });
+  });
+
+  ["cellular senescence", "channelrhodopsin", "autophagy aging", "mitochondrial dynamics"].forEach(function (t) {
+    var b = el("button", "chip", t);
+    b.type = "button";
+    b.addEventListener("click", function () { qEl.value = t; startSearch(); });
+    examplesEl.appendChild(b);
+  });
+
+  // Fuer Tests ausserhalb des Browsers
+  if (typeof window !== "undefined") window.__paperSuche = { rebuildAbstract: rebuildAbstract };
+})();
+</script>
+</body>
+</html>
