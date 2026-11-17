@@ -6,7 +6,7 @@
 <title>JournalBing</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
 <style>
-/* Layout: eine schmale Lesespalte; oben zwei Reiter (Suche, Sammlungen), darunter Ergebniskarten, die sich erst auf Wunsch aufklappen. */
+/* Layout: schmale Seitenleiste links mit allen Funktionen (Suche, Sammlungen, Daten), rechts eine ruhige Lesespalte. Auf schmalen Bildschirmen wird die Leiste zum ausklappbaren Menü. */
 :root {
   --bg: #f3f6f7;
   --surface: #ffffff;
@@ -24,6 +24,7 @@
   --warn-bg: #fdeadd;
   --heart: #c0264f;
   --heart-bg: #fde4ea;
+  --scrim: rgba(10, 25, 31, 0.45);
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
 }
@@ -45,6 +46,7 @@
     --warn-bg: #3a2616;
     --heart: #ff8aa6;
     --heart-bg: #3b1a25;
+    --scrim: rgba(0, 0, 0, 0.6);
     color-scheme: dark;
   }
 }
@@ -65,10 +67,12 @@
   --warn-bg: #3a2616;
   --heart: #ff8aa6;
   --heart-bg: #3b1a25;
+  --scrim: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -77,42 +81,139 @@ body {
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.5;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: max(20px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
 }
-.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-section.view { display: flex; flex-direction: column; gap: 20px; }
 
-h1 { font-family: var(--font-head); font-size: 1.75rem; line-height: 1.15; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
-h3 { font-family: var(--font-head); font-size: 1.2rem; margin: 0; }
+h1, h2, h3 { font-family: var(--font-head); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 1.6rem; line-height: 1.15; }
+h3 { font-size: 1.2rem; }
 .sub { color: var(--muted); margin: 4px 0 0; font-size: 0.95rem; }
 
-nav.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); }
-nav.tabs button {
-  background: transparent;
-  color: var(--muted);
-  border: 0;
-  border-bottom: 3px solid transparent;
-  padding: 10px 14px;
-  font-weight: 600;
-  margin-bottom: -1px;
-}
-nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+/* ---------- Gerüst ---------- */
+.app { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; }
 
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding-top: max(20px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+}
+.sidebar .brand { font-size: 1.3rem; padding: 4px 12px 16px; }
+
+.sidelabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 0 12px;
+  margin: 18px 0 4px;
+}
+.navitem {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: var(--fg);
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.95rem;
+  min-width: 0;
+}
+.navitem span.t { overflow-wrap: anywhere; min-width: 0; }
+.navitem:hover { background: var(--accent-soft); }
+.navitem.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.navitem .n { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 0.85rem; font-weight: 400; flex: none; }
+.navitem.quiet { color: var(--accent); }
+.newrow { display: flex; gap: 6px; padding: 4px 4px 4px 12px; }
+.newrow input { flex: 1; padding: 7px 10px; font-size: 0.9rem; min-width: 0; }
+.sidehint { color: var(--muted); font-size: 0.8rem; padding: 6px 12px 0; }
+.sidestatus { color: var(--muted); font-size: 0.85rem; padding: 6px 12px 0; min-height: 1.4em; }
+
+.main {
+  min-width: 0;
+  padding-top: max(28px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(40px, env(safe-area-inset-bottom, 0px));
+  padding-left: 32px;
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.content { max-width: 760px; display: flex; flex-direction: column; gap: 20px; }
+section.view { display: flex; flex-direction: column; gap: 20px; }
+
+.topbar, .backdrop { display: none; }
+
+@media (max-width: 860px) {
+  .app { display: block; }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    padding-top: max(10px, env(safe-area-inset-top, 0px));
+    padding-bottom: 10px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .topbar .brand { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; }
+  .menubtn {
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    width: 42px;
+    height: 42px;
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(300px, 86vw);
+    height: auto;
+    z-index: 40;
+    visibility: hidden;
+    transform: translateX(-100%);
+  }
+  .sidebar.open { visibility: visible; transform: translateX(0); }
+  .backdrop { display: block; position: fixed; inset: 0; background: var(--scrim); z-index: 30; }
+  .main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-top: 20px; }
+}
+@media (max-width: 860px) and (prefers-reduced-motion: no-preference) {
+  .sidebar { transition: transform 0.2s ease, visibility 0.2s; }
+}
+
+/* ---------- Formulare ---------- */
 form.search { display: flex; flex-direction: column; gap: 12px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 input[type="search"], input[type="text"], select {
   font: inherit;
   color: var(--fg);
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 11px 12px;
   min-width: 0;
 }
-input[type="search"] { flex: 1; font-size: 1rem; }
-input[type="text"] { flex: 1; font-size: 1rem; }
+input[type="search"] { flex: 1; font-size: 1rem; background: var(--surface); }
+select { background: var(--surface); }
 button { font: inherit; cursor: pointer; }
 button.primary {
   background: var(--accent);
@@ -122,7 +223,7 @@ button.primary {
   padding: 11px 18px;
   font-weight: 600;
 }
-button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible {
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -140,11 +241,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   padding: 5px 12px;
   font-size: 0.9rem;
 }
-.chip.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 
 .status { color: var(--muted); font-size: 0.9rem; min-height: 1.4em; }
 .error { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; }
 
+/* ---------- Karten ---------- */
 .results { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; list-style: none; }
 .card {
   background: var(--surface);
@@ -156,7 +257,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   gap: 10px;
   min-width: 0;
 }
-.card h2 { font-family: var(--font-head); font-size: 1.08rem; line-height: 1.3; margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.card h2 { font-size: 1.08rem; line-height: 1.3; font-weight: 700; overflow-wrap: anywhere; }
 .card h2 a { color: inherit; text-decoration: none; }
 .card h2 a:hover { text-decoration: underline; }
 .authors { color: var(--muted); font-size: 0.9rem; overflow-wrap: anywhere; }
@@ -190,16 +291,13 @@ button.danger.arm { background: var(--warn-bg); border-color: var(--warn); }
 .colpanel { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 .colpanel label { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; padding: 4px 0; min-width: 0; overflow-wrap: anywhere; }
 .colpanel input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
-.colpanel .newrow { display: flex; gap: 8px; margin-top: 4px; }
-.colpanel .newrow input { padding: 8px 10px; font-size: 0.95rem; }
+.colpanel .newrow { padding: 4px 0 0; }
 
 .libhead { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
 .libhead .count { color: var(--muted); font-size: 0.9rem; }
 .manage { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .manage input[type="text"] { padding: 6px 10px; font-size: 0.95rem; min-width: 12ch; }
 .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; color: var(--muted); font-size: 0.95rem; }
-.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding-top: 16px; }
-.hint { color: var(--muted); font-size: 0.85rem; max-width: 65ch; }
 input[type="file"] { display: none; }
 
 button.more { align-self: center; background: var(--surface); color: var(--accent); border: 1px solid var(--line); border-radius: 8px; padding: 11px 22px; font-weight: 600; }
@@ -209,79 +307,78 @@ footer { color: var(--muted); font-size: 0.8rem; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>JournalBing</h1>
-    <p class="sub">Aktuelle Paper zu deinem Thema, mit Open-Access-Status, Zitationen und Abstract.</p>
-  </header>
+<div class="app">
+  <div class="topbar">
+    <button type="button" class="menubtn" id="menuBtn" aria-label="Menü öffnen" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
+    <span class="brand">JournalBing</span>
+  </div>
+  <div class="backdrop" id="backdrop" hidden></div>
 
-  <nav class="tabs" aria-label="Bereiche">
-    <button type="button" id="tabSearch" aria-selected="true">Suche</button>
-    <button type="button" id="tabLib" aria-selected="false">Sammlungen</button>
-  </nav>
+  <aside class="sidebar" id="sidebar" aria-label="Hauptmenü">
+    <h1 class="brand">JournalBing</h1>
+    <nav id="sideNav" aria-label="Funktionen"></nav>
+    <div class="sidestatus" id="libStatus" role="status" aria-live="polite"></div>
+    <input type="file" id="importFile" accept=".json,application/json">
+  </aside>
 
-  <div class="error" id="notice" role="alert" hidden></div>
+  <main class="main">
+    <div class="content">
+      <div class="error" id="notice" role="alert" hidden></div>
 
-  <section class="view" id="viewSearch">
-    <form class="search" id="form" autocomplete="off">
-      <div class="row">
-        <input type="search" id="q" placeholder="Thema, z. B. cellular senescence" aria-label="Suchbegriff" enterkeyhint="search">
-        <button class="primary" type="submit">Suchen</button>
-      </div>
-      <div class="filters">
-        <label><input type="checkbox" id="oa" checked> Nur Open Access</label>
-        <label><input type="checkbox" id="pre"> Preprints einbeziehen</label>
-        <label>Zeitraum
-          <select id="period">
-            <option value="0">Alle</option>
-            <option value="1">Letztes Jahr</option>
-            <option value="3" selected>Letzte 3 Jahre</option>
-            <option value="5">Letzte 5 Jahre</option>
-          </select>
-        </label>
-        <label>Sortierung
-          <select id="sort">
-            <option value="publication_date:desc" selected>Neueste zuerst</option>
-            <option value="cited_by_count:desc">Meistzitiert</option>
-            <option value="relevance_score:desc">Beste Treffer</option>
-          </select>
-        </label>
-      </div>
-    </form>
+      <section class="view" id="viewSearch">
+        <div>
+          <h2>Suche</h2>
+          <p class="sub">Aktuelle Paper zu deinem Thema, mit Open-Access-Status, Zitationen und Abstract.</p>
+        </div>
+        <form class="search" id="form" autocomplete="off">
+          <div class="row">
+            <input type="search" id="q" placeholder="Thema, z. B. cellular senescence" aria-label="Suchbegriff" enterkeyhint="search">
+            <button class="primary" type="submit">Suchen</button>
+          </div>
+          <div class="filters">
+            <label><input type="checkbox" id="oa" checked> Nur Open Access</label>
+            <label><input type="checkbox" id="pre"> Preprints einbeziehen</label>
+            <label>Zeitraum
+              <select id="period">
+                <option value="0">Alle</option>
+                <option value="1">Letztes Jahr</option>
+                <option value="3" selected>Letzte 3 Jahre</option>
+                <option value="5">Letzte 5 Jahre</option>
+              </select>
+            </label>
+            <label>Sortierung
+              <select id="sort">
+                <option value="publication_date:desc" selected>Neueste zuerst</option>
+                <option value="cited_by_count:desc">Meistzitiert</option>
+                <option value="relevance_score:desc">Beste Treffer</option>
+              </select>
+            </label>
+          </div>
+        </form>
 
-    <div class="examples" id="examples">
-      <span>Zum Ausprobieren:</span>
+        <div class="examples" id="examples">
+          <span>Zum Ausprobieren:</span>
+        </div>
+
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <ol class="results" id="results"></ol>
+        <button class="more" id="more" type="button" hidden>Mehr laden</button>
+      </section>
+
+      <section class="view" id="viewLib" hidden>
+        <div class="libhead">
+          <div>
+            <h2 id="libTitle"></h2>
+            <div class="count" id="libCount"></div>
+          </div>
+          <div class="manage" id="libManage"></div>
+        </div>
+        <ol class="results" id="libList"></ol>
+      </section>
+
+      <footer>Daten: OpenAlex (api.openalex.org). Zitationszahlen und Open-Access-Status können von anderen Datenbanken abweichen.</footer>
     </div>
-
-    <div class="status" id="status" role="status" aria-live="polite"></div>
-    <ol class="results" id="results"></ol>
-    <button class="more" id="more" type="button" hidden>Mehr laden</button>
-  </section>
-
-  <section class="view" id="viewLib" hidden>
-    <div class="row" id="libChips" role="group" aria-label="Sammlungen"></div>
-    <div class="row">
-      <input type="text" id="newCol" placeholder="Neue Sammlung, z. B. Biology of Aging" aria-label="Name der neuen Sammlung" maxlength="60">
-      <button class="primary" type="button" id="newColBtn">Anlegen</button>
-    </div>
-    <div class="libhead">
-      <div>
-        <h3 id="libTitle"></h3>
-        <div class="count" id="libCount"></div>
-      </div>
-      <div class="manage" id="libManage"></div>
-    </div>
-    <ol class="results" id="libList"></ol>
-    <div class="tools">
-      <button type="button" class="ghost" id="exportBtn">Sammlungen exportieren</button>
-      <button type="button" class="ghost" id="importBtn">Sammlungen importieren</button>
-      <input type="file" id="importFile" accept=".json,application/json">
-      <div class="status" id="libStatus" role="status" aria-live="polite"></div>
-    </div>
-    <p class="hint">Deine Sammlungen werden nur in diesem Browser auf diesem Gerät gespeichert. Mit Export und Import überträgst du sie auf ein anderes Gerät, zum Beispiel vom iPad an den PC.</p>
-  </section>
-
-  <footer>Daten: OpenAlex (api.openalex.org). Zitationszahlen und Open-Access-Status können von anderen Datenbanken abweichen.</footer>
+  </main>
 </div>
 
 <script>
@@ -302,13 +399,17 @@ footer { color: var(--muted); font-size: 0.8rem; }
   var form = $("form"), qEl = $("q"), oaEl = $("oa"), preEl = $("pre");
   var periodEl = $("period"), sortEl = $("sort");
   var statusEl = $("status"), resultsEl = $("results"), moreEl = $("more"), examplesEl = $("examples");
-  var tabSearch = $("tabSearch"), tabLib = $("tabLib"), viewSearch = $("viewSearch"), viewLib = $("viewLib");
+  var viewSearch = $("viewSearch"), viewLib = $("viewLib");
   var noticeEl = $("notice");
-  var libChips = $("libChips"), libTitle = $("libTitle"), libCount = $("libCount"), libManage = $("libManage");
-  var libList = $("libList"), libStatus = $("libStatus");
+  var libTitle = $("libTitle"), libCount = $("libCount"), libManage = $("libManage"), libList = $("libList");
+  var libStatus = $("libStatus"), sideNav = $("sideNav");
+  var sidebar = $("sidebar"), backdrop = $("backdrop"), menuBtn = $("menuBtn");
 
   var state = { page: 1, total: 0, shown: 0, loading: false, query: "" };
   var currentColId = FAV;
+  var currentView = "search";
+  var creating = false;
+  var creatingValue = "";
 
   // ---------- Hilfsfunktionen ----------
 
@@ -461,11 +562,95 @@ footer { color: var(--muted); font-size: 0.8rem; }
     return c;
   }
 
-  function savedCount() { return Object.keys(store.papers).length; }
+  // ---------- Seitenleiste ----------
 
-  function updateTabs() {
-    var n = savedCount();
-    tabLib.textContent = "Sammlungen" + (n ? " (" + n + ")" : "");
+  function openDrawer() {
+    sidebar.classList.add("open");
+    backdrop.hidden = false;
+    menuBtn.setAttribute("aria-expanded", "true");
+  }
+
+  function closeDrawer() {
+    sidebar.classList.remove("open");
+    backdrop.hidden = true;
+    menuBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function navItem(label, count, active, onClick, extraClass) {
+    var b = el("button", "navitem" + (active ? " active" : "") + (extraClass ? " " + extraClass : ""));
+    b.type = "button";
+    if (active) b.setAttribute("aria-current", "page");
+    b.appendChild(el("span", "t", label));
+    if (count !== null && count !== undefined) b.appendChild(el("span", "n", String(count)));
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function renderSidebar() {
+    sideNav.innerHTML = "";
+
+    sideNav.appendChild(navItem("Suche", null, currentView === "search", function () { showView("search"); }));
+
+    sideNav.appendChild(el("div", "sidelabel", "Sammlungen"));
+    store.collections.forEach(function (c) {
+      var label = c.id === FAV ? "♥ " + c.name : c.name;
+      var active = currentView === "lib" && currentColId === c.id;
+      sideNav.appendChild(navItem(label, c.items.length, active, function () {
+        currentColId = c.id;
+        showView("lib");
+      }));
+    });
+
+    if (creating) {
+      var row = el("div", "newrow");
+      var input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "Name";
+      input.maxLength = 60;
+      input.value = creatingValue;
+      input.setAttribute("aria-label", "Name der neuen Sammlung");
+      var ok = el("button", "toggle", "OK");
+      ok.type = "button";
+      function submit() {
+        var c = createCollection(input.value);
+        creating = false;
+        creatingValue = "";
+        if (c) { currentColId = c.id; showView("lib"); }
+        else renderSidebar();
+      }
+      input.addEventListener("input", function () { creatingValue = input.value; });
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); submit(); }
+        if (e.key === "Escape") { creating = false; creatingValue = ""; renderSidebar(); }
+      });
+      ok.addEventListener("click", submit);
+      row.appendChild(input);
+      row.appendChild(ok);
+      sideNav.appendChild(row);
+      setTimeout(function () { input.focus(); }, 0);
+    } else {
+      sideNav.appendChild(navItem("+ Neue Sammlung", null, false, function () {
+        creating = true;
+        renderSidebar();
+      }, "quiet"));
+    }
+
+    sideNav.appendChild(el("div", "sidelabel", "Daten"));
+    sideNav.appendChild(navItem("Sammlungen exportieren", null, false, exportData, "quiet"));
+    sideNav.appendChild(navItem("Sammlungen importieren", null, false, function () { $("importFile").click(); }, "quiet"));
+    sideNav.appendChild(el("div", "sidehint", "Gespeichert wird nur in diesem Browser. Mit Export und Import ziehst du auf ein anderes Gerät um."));
+  }
+
+  function showView(name) {
+    currentView = name;
+    var lib = name === "lib";
+    viewSearch.hidden = lib;
+    viewLib.hidden = !lib;
+    libStatus.textContent = "";
+    if (lib) renderLibrary();
+    renderSidebar();
+    closeDrawer();
+    window.scrollTo(0, 0);
   }
 
   // ---------- Ergebniskarte ----------
@@ -566,10 +751,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
     function afterChange() {
       updateFav();
-      updateTabs();
+      renderSidebar();
       if (!panel.hidden) buildPanel();
-      if (ctx === "library" && !inCol(colById(currentColId), rec.id)) renderLibrary();
-      else if (ctx === "library") renderLibraryHead();
+      if (ctx === "library") {
+        if (!inCol(colById(currentColId), rec.id)) renderLibrary();
+        else renderLibraryHead();
+      }
     }
 
     function buildPanel() {
@@ -702,13 +889,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   function renderLibraryHead() {
     var cur = colById(currentColId) || store.collections[0];
-    libTitle.textContent = cur.name;
+    libTitle.textContent = cur.id === FAV ? "♥ " + cur.name : cur.name;
     libCount.textContent = cur.items.length === 1 ? "1 Paper" : cur.items.length + " Paper";
-    var chips = libChips.querySelectorAll("button.chip");
-    for (var i = 0; i < chips.length; i++) {
-      var c = store.collections[i];
-      if (c) chips[i].textContent = c.name + " · " + c.items.length;
-    }
   }
 
   function renderManage(cur) {
@@ -732,6 +914,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
         var n = input.value.trim().slice(0, 60);
         if (n) { cur.name = n; persist(); }
         renderLibrary();
+        renderSidebar();
       });
       cancel.addEventListener("click", function () { renderLibrary(); });
       input.addEventListener("keydown", function (e) {
@@ -761,8 +944,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
       gc();
       persist();
       currentColId = FAV;
-      updateTabs();
       renderLibrary();
+      renderSidebar();
     });
 
     libManage.appendChild(renameBtn);
@@ -772,15 +955,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
   function renderLibrary() {
     if (!colById(currentColId)) currentColId = FAV;
     var cur = colById(currentColId);
-
-    libChips.innerHTML = "";
-    store.collections.forEach(function (c) {
-      var b = el("button", "chip" + (c.id === currentColId ? " on" : ""), c.name + " · " + c.items.length);
-      b.type = "button";
-      b.setAttribute("aria-pressed", c.id === currentColId ? "true" : "false");
-      b.addEventListener("click", function () { currentColId = c.id; libStatus.textContent = ""; renderLibrary(); });
-      libChips.appendChild(b);
-    });
 
     renderLibraryHead();
     renderManage(cur);
@@ -798,15 +972,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
         : "Diese Sammlung ist noch leer. Bei jedem Paper kannst du über „Sammlung“ festlegen, wo es hinein soll."));
       libList.appendChild(li);
     }
-  }
-
-  function showView(name) {
-    var lib = name === "lib";
-    viewSearch.hidden = lib;
-    viewLib.hidden = !lib;
-    tabSearch.setAttribute("aria-selected", lib ? "false" : "true");
-    tabLib.setAttribute("aria-selected", lib ? "true" : "false");
-    if (lib) renderLibrary();
   }
 
   // ---------- Export und Import ----------
@@ -836,7 +1001,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       libStatus.textContent = "Die Datei ist keine gültige JournalBing-Datei.";
       return;
     }
-    var before = savedCount();
+    var before = Object.keys(store.papers).length;
     data.collections.forEach(function (ic) {
       if (!ic || typeof ic.name !== "string" || !Array.isArray(ic.items)) return;
       var target = ic.id === FAV ? colById(FAV) : null;
@@ -877,9 +1042,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
       });
     });
     persist();
-    updateTabs();
-    renderLibrary();
-    var added = savedCount() - before;
+    if (currentView === "lib") renderLibrary();
+    renderSidebar();
+    var added = Object.keys(store.papers).length - before;
     libStatus.textContent = "Import fertig. " + added + (added === 1 ? " neues Paper" : " neue Paper") + " hinzugefügt.";
   }
 
@@ -891,25 +1056,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
     c.addEventListener("change", function () { if (state.query) startSearch(); });
   });
 
-  tabSearch.addEventListener("click", function () { showView("search"); });
-  tabLib.addEventListener("click", function () { libStatus.textContent = ""; showView("lib"); });
-
-  var newColInput = $("newCol");
-  function addCollectionFromForm() {
-    var c = createCollection(newColInput.value);
-    if (!c) { libStatus.textContent = "Gib der Sammlung zuerst einen Namen."; return; }
-    newColInput.value = "";
-    libStatus.textContent = "";
-    currentColId = c.id;
-    renderLibrary();
-  }
-  $("newColBtn").addEventListener("click", addCollectionFromForm);
-  newColInput.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") { e.preventDefault(); addCollectionFromForm(); }
+  menuBtn.addEventListener("click", function () {
+    if (sidebar.classList.contains("open")) closeDrawer(); else openDrawer();
   });
+  backdrop.addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
 
-  $("exportBtn").addEventListener("click", exportData);
-  $("importBtn").addEventListener("click", function () { $("importFile").click(); });
   $("importFile").addEventListener("change", function (e) {
     var f = e.target.files && e.target.files[0];
     if (!f) return;
@@ -927,7 +1079,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     examplesEl.appendChild(b);
   });
 
-  updateTabs();
+  renderSidebar();
 })();
 </script>
 </body>
