@@ -83,9 +83,10 @@ body {
   line-height: 1.5;
 }
 
-h1, h2, h3 { font-family: var(--font-head); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1, h2, h3, h4 { font-family: var(--font-head); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
 h2 { font-size: 1.6rem; line-height: 1.15; }
 h3 { font-size: 1.2rem; }
+h4 { font-size: 1rem; }
 .sub { color: var(--muted); margin: 4px 0 0; font-size: 0.95rem; }
 
 /* ---------- Gerüst ---------- */
@@ -241,6 +242,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   padding: 5px 12px;
   font-size: 0.9rem;
 }
+.chip.small { font-size: 0.8rem; padding: 3px 10px; text-align: left; }
+.chip[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); }
 
 .status { color: var(--muted); font-size: 0.9rem; min-height: 1.4em; }
 .error { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; }
@@ -262,8 +265,22 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .card h2 a:hover { text-decoration: underline; }
 .authors { color: var(--muted); font-size: 0.9rem; overflow-wrap: anywhere; }
 .authors b { color: var(--fg); font-weight: 600; }
+button.linkbtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--fg);
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+button.linkbtn:hover, button.linkbtn[aria-expanded="true"] { color: var(--accent); }
+.insts { display: flex; flex-wrap: wrap; gap: 6px; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 0.85rem; color: var(--muted); }
 .meta .num { font-variant-numeric: tabular-nums; color: var(--fg); font-weight: 600; }
+.meta .journal { color: var(--fg); font-weight: 500; }
 .badge { border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600; }
 .badge.oa { background: var(--oa-bg); color: var(--oa); }
 .badge.closed { background: var(--closed-bg); color: var(--closed); }
@@ -287,6 +304,32 @@ button.danger { color: var(--warn); }
 button.danger.arm { background: var(--warn-bg); border-color: var(--warn); }
 .abstract { font-size: 0.95rem; line-height: 1.6; max-width: 65ch; border-top: 1px solid var(--line); padding-top: 10px; overflow-wrap: anywhere; }
 .abstract.none { color: var(--muted); font-style: italic; }
+
+.detail {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+.detail .stats { color: var(--muted); overflow-wrap: anywhere; }
+.detail .stats a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.detail .stats a:hover { text-decoration: underline; }
+.topics { display: flex; flex-wrap: wrap; gap: 6px; }
+.topics .tag { background: var(--accent-soft); color: var(--accent); padding: 2px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 500; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { padding: 4px 10px; font-size: 0.82rem; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.mini { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.mini li { border-top: 1px solid var(--line); padding-top: 8px; min-width: 0; }
+.mini a { color: var(--fg); font-weight: 500; text-decoration: none; overflow-wrap: anywhere; }
+.mini a:hover { color: var(--accent); text-decoration: underline; }
+.mini .m { color: var(--muted); font-size: 0.82rem; }
+.detail .note { color: var(--muted); font-size: 0.8rem; }
 
 .colpanel { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 .colpanel label { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; padding: 4px 0; min-width: 0; overflow-wrap: anywhere; }
@@ -328,7 +371,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       <section class="view" id="viewSearch">
         <div>
           <h2>Suche</h2>
-          <p class="sub">Aktuelle Paper zu deinem Thema, mit Open-Access-Status, Zitationen und Abstract.</p>
+          <p class="sub">Aktuelle Paper zu deinem Thema, mit Open-Access-Status, Zitationen und Abstract. Tippe auf einen Autor oder ein Institut, um mehr darüber zu sehen.</p>
         </div>
         <form class="search" id="form" autocomplete="off">
           <div class="row">
@@ -376,7 +419,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <ol class="results" id="libList"></ol>
       </section>
 
-      <footer>Daten: OpenAlex (api.openalex.org). Zitationszahlen und Open-Access-Status können von anderen Datenbanken abweichen.</footer>
+      <footer>Daten: OpenAlex (api.openalex.org). Zitationszahlen, Open-Access-Status und Autorenprofile können von anderen Datenbanken abweichen.</footer>
     </div>
   </main>
 </div>
@@ -385,7 +428,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 (function () {
   "use strict";
 
-  var API = "https://api.openalex.org/works";
+  var API = "https://api.openalex.org/";
   var PER_PAGE = 20;
   var SELECT = [
     "id", "doi", "title", "display_name", "type", "publication_date", "publication_year",
@@ -441,8 +484,26 @@ footer { color: var(--muted); font-size: 0.8rem; }
     return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso;
   }
 
+  function fmtNum(n) { return Number(n || 0).toLocaleString("de-DE"); }
+
   function safeUrl(u) {
     return typeof u === "string" && /^https?:\/\//i.test(u) ? u : null;
+  }
+
+  function hostOf(u) {
+    try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; }
+  }
+
+  function countryName(code) {
+    if (!code) return "";
+    try { return new Intl.DisplayNames(["de"], { type: "region" }).of(code) || code; } catch (e) { return code; }
+  }
+
+  // OpenAlex-IDs wie "https://openalex.org/A123" auf "A123" kuerzen; nur A (Autor) und I (Institut) erlaubt
+  function shortId(url, letter) {
+    if (typeof url !== "string") return null;
+    var m = url.match(/(?:^|\/)([AI]\d+)$/);
+    return m && m[1].charAt(0) === letter ? m[1] : null;
   }
 
   function el(tag, cls, text) {
@@ -456,31 +517,114 @@ footer { color: var(--muted); font-size: 0.8rem; }
     return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   }
 
+  function cleanPerson(p) {
+    if (typeof p === "string") return p ? { name: p.slice(0, 200), id: null } : null;
+    if (p && typeof p.name === "string" && p.name) {
+      return { name: p.name.slice(0, 200), id: /^A\d+$/.test(p.id || "") ? p.id : null };
+    }
+    return null;
+  }
+
+  function cleanInsts(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (i) {
+      return i && typeof i.name === "string" && /^I\d+$/.test(i.id || "");
+    }).slice(0, 4).map(function (i) {
+      return { id: i.id, name: i.name.slice(0, 200), country: String(i.country || "").slice(0, 2) };
+    });
+  }
+
   // OpenAlex-Eintrag in einen schlanken Datensatz umwandeln, der sich speichern laesst
   function normalize(work) {
     var oa = work.open_access || {};
     var best = work.best_oa_location || {};
     var prim = work.primary_location || {};
     var list = work.authorships || [];
-    var name = function (a) { return (a && a.author && a.author.display_name) || "Unbekannt"; };
+    var src = prim.source || {};
+
+    function person(a) {
+      return {
+        name: (a && a.author && a.author.display_name) || "Unbekannt",
+        id: shortId(a && a.author && a.author.id, "A")
+      };
+    }
+    var insts = [], seen = {};
+    [list[0], list[list.length - 1]].forEach(function (a) {
+      if (!a) return;
+      (a.institutions || []).forEach(function (i) {
+        var id = shortId(i.id, "I");
+        if (!id || seen[id]) return;
+        seen[id] = true;
+        insts.push({ id: id, name: i.display_name || "Institut", country: i.country_code || "" });
+      });
+    });
+
+    var domain = hostOf(prim.landing_page_url || "");
+    if (domain === "doi.org" || domain === "dx.doi.org") domain = "";
+
     return {
       id: work.id,
       title: work.display_name || work.title || "(ohne Titel)",
       doi: work.doi || null,
       landing: best.landing_page_url || prim.landing_page_url || work.doi || work.id,
       pdf: best.pdf_url || null,
-      journal: (prim.source && prim.source.display_name) || "",
+      source: {
+        name: src.display_name || "",
+        publisher: src.host_organization_name || "",
+        type: src.type || "",
+        domain: domain
+      },
       date: work.publication_date || "",
       type: work.type || "",
       isOa: !!oa.is_oa,
       cited: work.cited_by_count || 0,
       authors: {
-        first: list.length ? name(list[0]) : "",
-        last: list.length > 1 ? name(list[list.length - 1]) : "",
+        first: list.length ? person(list[0]) : null,
+        last: list.length > 1 ? person(list[list.length - 1]) : null,
         count: list.length
       },
+      insts: cleanInsts(insts),
       abstract: rebuildAbstract(work.abstract_inverted_index)
     };
+  }
+
+  // gespeicherten oder importierten Datensatz pruefen und bereinigen
+  function cleanRecord(pid, rec) {
+    var a = rec.authors || {};
+    var src = rec.source || {};
+    return {
+      id: pid,
+      title: String(rec.title),
+      doi: safeUrl(rec.doi),
+      landing: safeUrl(rec.landing),
+      pdf: safeUrl(rec.pdf),
+      source: {
+        name: String(src.name || rec.journal || ""),
+        publisher: String(src.publisher || ""),
+        type: String(src.type || ""),
+        domain: String(src.domain || "")
+      },
+      date: String(rec.date || ""),
+      type: String(rec.type || ""),
+      isOa: !!rec.isOa,
+      cited: Number(rec.cited) || 0,
+      authors: { first: cleanPerson(a.first), last: cleanPerson(a.last), count: Number(a.count) || 0 },
+      insts: cleanInsts(rec.insts),
+      abstract: String(rec.abstract || "")
+    };
+  }
+
+  // Abfragen zwischenspeichern, damit ein zweiter Klick nicht erneut laedt
+  var cache = {};
+  function getJSON(url) {
+    if (cache[url]) return cache[url];
+    var p = fetch(url).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+    cache[url] = p;
+    p.catch(function () { delete cache[url]; });
+    return p;
   }
 
   // ---------- Speicher (Favoriten und Sammlungen) ----------
@@ -611,13 +755,13 @@ footer { color: var(--muted); font-size: 0.8rem; }
       input.setAttribute("aria-label", "Name der neuen Sammlung");
       var ok = el("button", "toggle", "OK");
       ok.type = "button";
-      function submit() {
+      var submit = function () {
         var c = createCollection(input.value);
         creating = false;
         creatingValue = "";
         if (c) { currentColId = c.id; showView("lib"); }
         else renderSidebar();
-      }
+      };
       input.addEventListener("input", function () { creatingValue = input.value; });
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") { e.preventDefault(); submit(); }
@@ -653,21 +797,13 @@ footer { color: var(--muted); font-size: 0.8rem; }
     window.scrollTo(0, 0);
   }
 
-  // ---------- Ergebniskarte ----------
+  // ---------- Autoren- und Institutsdetails ----------
 
-  function authorsLine(rec) {
-    var box = el("div", "authors");
-    var a = rec.authors || {};
-    if (!a.first) { box.textContent = "Keine Autorenangabe"; return box; }
-    box.appendChild(el("b", null, a.first));
-    if (a.last) {
-      box.appendChild(document.createTextNode(" (Erstautor) · "));
-      box.appendChild(el("b", null, a.last));
-      box.appendChild(document.createTextNode(" (Letztautor)"));
-      if (a.count > 2) box.appendChild(document.createTextNode(" · +" + (a.count - 2) + " weitere"));
-    }
-    return box;
-  }
+  var TYPE_LABEL = {
+    education: "Hochschule", healthcare: "Klinik / Gesundheitswesen", nonprofit: "Non-Profit-Organisation",
+    company: "Unternehmen", government: "Behörde", facility: "Forschungseinrichtung",
+    archive: "Archiv", funder: "Förderorganisation", other: "Sonstige Einrichtung"
+  };
 
   function externalLink(text, url) {
     var a = el("a", null, text);
@@ -676,6 +812,135 @@ footer { color: var(--muted); font-size: 0.8rem; }
     a.rel = "noopener noreferrer";
     return a;
   }
+
+  function worksUrl(kind, id, mode, ctx) {
+    var f = (kind === "A" ? "authorships.author.id:" : "authorships.institutions.id:") + id;
+    var q = [
+      "filter=" + f + ",type:article|review|preprint",
+      "sort=" + mode.sort,
+      "per-page=5",
+      "select=id,display_name,publication_date,cited_by_count,primary_location,doi"
+    ];
+    if (mode.topic && state.query) q.unshift("search=" + encodeURIComponent(state.query));
+    return API + "works?" + q.join("&");
+  }
+
+  function renderMiniWorks(listEl, works) {
+    listEl.innerHTML = "";
+    if (!works.length) {
+      listEl.appendChild(el("li", "m", "Keine Paper gefunden."));
+      return;
+    }
+    works.forEach(function (w) {
+      var li = el("li");
+      var prim = w.primary_location || {};
+      var url = safeUrl(prim.landing_page_url) || safeUrl(w.doi) || safeUrl(w.id);
+      var title = w.display_name || "(ohne Titel)";
+      var line = el("div");
+      if (url) line.appendChild(externalLink(title, url)); else line.textContent = title;
+      li.appendChild(line);
+      var parts = [];
+      if (prim.source && prim.source.display_name) parts.push(prim.source.display_name);
+      if (w.publication_date) parts.push(w.publication_date.slice(0, 4));
+      parts.push(fmtNum(w.cited_by_count) + " Zitationen");
+      li.appendChild(el("div", "m", parts.join(" · ")));
+      listEl.appendChild(li);
+    });
+  }
+
+  function renderEntity(box, kind, id, name, ctx) {
+    box.innerHTML = "";
+    box.appendChild(el("h4", null, name));
+    var info = el("div", "stats", "Profil wird geladen …");
+    var tags = el("div", "topics");
+    var seg = el("div", "seg");
+    var mini = el("ul", "mini");
+    var note = el("div", "note");
+    box.appendChild(info);
+    box.appendChild(tags);
+    box.appendChild(seg);
+    box.appendChild(mini);
+    box.appendChild(note);
+
+    var modes = [
+      { label: "Neueste", sort: "publication_date:desc" },
+      { label: "Meistzitiert", sort: "cited_by_count:desc" }
+    ];
+    if (kind === "I" && ctx === "search" && state.query) {
+      modes.push({ label: "Zu „" + state.query + "“", sort: "publication_date:desc", topic: true });
+    }
+
+    var token = 0;
+    var buttons = [];
+    function loadWorks(idx) {
+      var my = ++token;
+      buttons.forEach(function (b, i) { b.setAttribute("aria-pressed", i === idx ? "true" : "false"); });
+      mini.innerHTML = "";
+      mini.appendChild(el("li", "m", "Lade Paper …"));
+      getJSON(worksUrl(kind, id, modes[idx], ctx)).then(function (data) {
+        if (my === token) renderMiniWorks(mini, data.results || []);
+      }).catch(function (err) {
+        if (my !== token) return;
+        mini.innerHTML = "";
+        mini.appendChild(el("li", "m", "Die Paper konnten nicht geladen werden (" + err.message + ")."));
+      });
+    }
+    modes.forEach(function (m, idx) {
+      var b = el("button", "ghost", m.label);
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { loadWorks(idx); });
+      buttons.push(b);
+      seg.appendChild(b);
+    });
+
+    var url = API + (kind === "A" ? "authors/" : "institutions/") + id;
+    getJSON(url).then(function (e) {
+      info.textContent = "";
+      var parts = [];
+      if (kind === "A") {
+        parts.push(fmtNum(e.works_count) + " Publikationen");
+        parts.push(fmtNum(e.cited_by_count) + " Zitationen");
+        if (e.summary_stats && e.summary_stats.h_index !== undefined) parts.push("h-Index " + e.summary_stats.h_index);
+        info.appendChild(document.createTextNode(parts.join(" · ")));
+        var insts = e.last_known_institutions || (e.last_known_institution ? [e.last_known_institution] : []);
+        var names = insts.map(function (i) { return i && i.display_name; }).filter(Boolean);
+        if (names.length) {
+          info.appendChild(document.createElement("br"));
+          info.appendChild(document.createTextNode("Zuletzt: " + names.join(", ")));
+        }
+        var orcid = safeUrl(e.orcid);
+        if (orcid) {
+          info.appendChild(document.createElement("br"));
+          info.appendChild(externalLink("ORCID-Profil", orcid));
+        }
+        note.textContent = "Profile werden automatisch zugeordnet und können Fehler enthalten, besonders bei häufigen Namen.";
+        var topics = (e.topics || e.x_concepts || []).slice(0, 5);
+        topics.forEach(function (t) { if (t && t.display_name) tags.appendChild(el("span", "tag", t.display_name)); });
+      } else {
+        var where = [];
+        if (e.geo && e.geo.city) where.push(e.geo.city);
+        if (e.country_code) where.push(countryName(e.country_code));
+        if (TYPE_LABEL[e.type]) parts.push(TYPE_LABEL[e.type]);
+        if (where.length) parts.push(where.join(", "));
+        parts.push(fmtNum(e.works_count) + " Publikationen");
+        parts.push(fmtNum(e.cited_by_count) + " Zitationen");
+        info.appendChild(document.createTextNode(parts.join(" · ")));
+        var home = safeUrl(e.homepage_url);
+        if (home) {
+          info.appendChild(document.createElement("br"));
+          info.appendChild(externalLink("Webseite", home));
+        }
+        note.textContent = "Die Liste zeigt Paper, bei denen mindestens ein Autor zu diesem Institut gehört.";
+      }
+    }).catch(function (err) {
+      info.textContent = "Das Profil konnte nicht geladen werden (" + err.message + ").";
+    });
+
+    loadWorks(0);
+  }
+
+  // ---------- Ergebniskarte ----------
 
   // ctx: "search" oder "library"
   function renderCard(rec, ctx) {
@@ -687,10 +952,78 @@ footer { color: var(--muted); font-size: 0.8rem; }
     else h.textContent = rec.title;
     li.appendChild(h);
 
-    li.appendChild(authorsLine(rec));
+    // Klickbare Autoren und Institute teilen sich ein Detailfeld
+    var detail = el("div", "detail");
+    detail.hidden = true;
+    var openKey = null;
+    var triggers = [];
 
+    function register(btn, key) { triggers.push({ btn: btn, key: key }); }
+    function toggleEntity(kind, id, name) {
+      var key = kind + id;
+      if (openKey === key) {
+        openKey = null;
+        detail.hidden = true;
+        detail.innerHTML = "";
+      } else {
+        openKey = key;
+        detail.hidden = false;
+        renderEntity(detail, kind, id, name, ctx);
+      }
+      triggers.forEach(function (t) { t.btn.setAttribute("aria-expanded", t.key === openKey ? "true" : "false"); });
+    }
+
+    // Autoren
+    var authorsBox = el("div", "authors");
+    var a = rec.authors || {};
+    var first = cleanPerson(a.first), last = cleanPerson(a.last);
+    function personNode(p) {
+      if (!p.id) return el("b", null, p.name);
+      var b = el("button", "linkbtn", p.name);
+      b.type = "button";
+      b.setAttribute("aria-expanded", "false");
+      b.addEventListener("click", function () { toggleEntity("A", p.id, p.name); });
+      register(b, "A" + p.id);
+      return b;
+    }
+    if (!first) {
+      authorsBox.textContent = "Keine Autorenangabe";
+    } else {
+      authorsBox.appendChild(personNode(first));
+      if (last) {
+        authorsBox.appendChild(document.createTextNode(" (Erstautor) · "));
+        authorsBox.appendChild(personNode(last));
+        authorsBox.appendChild(document.createTextNode(" (Letztautor)"));
+        if (a.count > 2) authorsBox.appendChild(document.createTextNode(" · +" + (a.count - 2) + " weitere"));
+      }
+    }
+    li.appendChild(authorsBox);
+
+    // Institute
+    var insts = cleanInsts(rec.insts);
+    if (insts.length) {
+      var instRow = el("div", "insts");
+      insts.forEach(function (i) {
+        var label = i.country ? i.name + " (" + i.country + ")" : i.name;
+        var b = el("button", "chip small", label);
+        b.type = "button";
+        b.setAttribute("aria-expanded", "false");
+        b.addEventListener("click", function () { toggleEntity("I", i.id, i.name); });
+        register(b, "I" + i.id);
+        instRow.appendChild(b);
+      });
+      li.appendChild(instRow);
+    }
+    li.appendChild(detail);
+
+    // Quelle: Journal, Verlag und Webseite
+    var src = rec.source || {};
+    var journalName = src.name || rec.journal || "";
     var meta = el("div", "meta");
-    if (rec.journal) meta.appendChild(el("span", null, rec.journal));
+    if (journalName) meta.appendChild(el("span", "journal", journalName));
+    if (src.publisher && src.publisher !== journalName) meta.appendChild(el("span", null, "Verlag: " + src.publisher));
+    if (src.type === "repository") meta.appendChild(el("span", null, "Repositorium"));
+    if (src.domain) meta.appendChild(el("span", null, "Seite: " + src.domain));
     if (rec.date) meta.appendChild(el("span", null, formatDate(rec.date)));
     if (rec.type === "preprint") meta.appendChild(el("span", "badge pre", "Preprint"));
     meta.appendChild(el("span", rec.isOa ? "badge oa" : "badge closed", rec.isOa ? "Open Access" : "Kein freier Zugang"));
@@ -825,7 +1158,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     if (oaEl.checked) filters.push("is_oa:true");
     var years = parseInt(periodEl.value, 10);
     if (years > 0) filters.push("from_publication_date:" + dateYearsBack(years));
-    return API + "?" + [
+    return API + "works?" + [
       "search=" + encodeURIComponent(state.query),
       "filter=" + filters.join(","),
       "sort=" + sortEl.value,
@@ -978,7 +1311,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   function exportData() {
     try {
-      var payload = JSON.stringify({ app: "journalbing", version: 1, collections: store.collections, papers: store.papers }, null, 2);
+      var payload = JSON.stringify({ app: "journalbing", version: 2, collections: store.collections, papers: store.papers }, null, 2);
       var blob = new Blob([payload], { type: "application/json" });
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
@@ -1018,26 +1351,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       ic.items.forEach(function (pid) {
         var rec = data.papers[pid];
         if (typeof pid !== "string" || !rec || typeof rec.title !== "string") return;
-        if (!store.papers[pid]) {
-          store.papers[pid] = {
-            id: pid,
-            title: String(rec.title),
-            doi: safeUrl(rec.doi),
-            landing: safeUrl(rec.landing),
-            pdf: safeUrl(rec.pdf),
-            journal: String(rec.journal || ""),
-            date: String(rec.date || ""),
-            type: String(rec.type || ""),
-            isOa: !!rec.isOa,
-            cited: Number(rec.cited) || 0,
-            authors: {
-              first: String((rec.authors && rec.authors.first) || ""),
-              last: String((rec.authors && rec.authors.last) || ""),
-              count: Number(rec.authors && rec.authors.count) || 0
-            },
-            abstract: String(rec.abstract || "")
-          };
-        }
+        if (!store.papers[pid]) store.papers[pid] = cleanRecord(pid, rec);
         if (target.items.indexOf(pid) === -1) target.items.push(pid);
       });
     });
