@@ -396,6 +396,14 @@ mark { background: var(--hl); color: inherit; border-radius: 3px; padding: 0 2px
 .howto b { color: var(--fg); }
 .setgroup .row + .row { margin-top: 8px; }
 button[disabled] { opacity: 0.5; cursor: default; }
+.syncbtn { margin-top: 4px; }
+.syncbtn { justify-content: flex-start; }
+.navitem.syncbtn .markicon { margin-right: 8px; fill: none; }
+.syncbtn[disabled] { opacity: 1; cursor: default; }
+.syncnote { padding: 0 12px 0 36px; font-size: 0.78rem; color: var(--muted); }
+.syncnote.fail { color: var(--red); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: no-preference) { .markicon.spin { animation: spin 0.9s linear infinite; } }
 .libfilter { display: flex; flex-wrap: wrap; gap: 6px; }
 .libfilter button { padding: 4px 12px; font-size: 0.85rem; }
 .libfilter button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
@@ -591,7 +599,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
             <button class="ghost" type="button" id="syncSave">Speichern</button>
           </div>
           <div class="row">
-            <button class="primary" type="button" id="syncNow">Jetzt abgleichen</button>
+            <button class="primary" type="button" id="syncNow">Jetzt aktualisieren</button>
             <button class="ghost" type="button" id="syncClear" hidden>Verbindung entfernen</button>
           </div>
           <p class="hint" id="syncState"></p>
@@ -603,7 +611,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
               <li>GitHub &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens &rarr; Fine-grained tokens &rarr; Generate new token.</li>
               <li>Bei &bdquo;Repository access&ldquo; nur dieses eine Repository w&auml;hlen. Unter Permissions &rarr; Repository permissions &rarr; <b>Contents: Read and write</b> einstellen.</li>
               <li>Den Schl&uuml;ssel kopieren und oben einf&uuml;gen, dazu den Repository-Namen (<i>dein-name/journalbing-daten</i>).</li>
-              <li>Auf jedem Ger&auml;t einmal einrichten. Danach reicht &bdquo;Jetzt abgleichen&ldquo;.</li>
+              <li>Auf jedem Ger&auml;t einmal einrichten. Danach reicht &bdquo;Aktualisieren&ldquo; in der linken Leiste.</li>
             </ol>
             <p class="hint">Der Abgleich f&uuml;gt zusammen: Was auf einem Ger&auml;t neu ist, kommt aufs andere. Entfernte Paper kommen beim n&auml;chsten Abgleich vom anderen Ger&auml;t zur&uuml;ck, solange sie dort noch gespeichert sind. Der Schl&uuml;ssel liegt nur in diesem Browser. Lege ihn nie in das &ouml;ffentliche JournalBing-Repository.</p>
           </details>
@@ -655,7 +663,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   var libStatus = $("libStatus"), sideNav = $("sideNav"), libFilterEl = $("libFilter");
   var sidebar = $("sidebar"), backdrop = $("backdrop"), menuBtn = $("menuBtn");
   var settingsBtn = $("settingsBtn"), keyInput = $("keyInput"), keySave = $("keySave"), keyClear = $("keyClear"), keyState = $("keyState");
-  var VERSION = "Version 2026.11.19-9";
+  var VERSION = "Version 2026.11.19-10";
 
   var state = {
     loading: false, query: "", source: "both", shown: 0, seen: {},
@@ -1074,6 +1082,19 @@ footer { color: var(--muted); font-size: 0.8rem; }
     menuBtn.setAttribute("aria-expanded", "false");
   }
 
+  var syncBusy = false, syncMsg = "", syncFail = false;
+  function refreshIcon(spin) {
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("class", "markicon" + (spin ? " spin" : ""));
+    svg.setAttribute("aria-hidden", "true");
+    var path = document.createElementNS(NS, "path");
+    path.setAttribute("d", "M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4");
+    svg.appendChild(path);
+    return svg;
+  }
+
   var MARK_PATH = "M6 3h12v18l-6-4-6 4z";
   function markIcon() {
     var NS = "http://www.w3.org/2000/svg";
@@ -1148,6 +1169,17 @@ footer { color: var(--muted); font-size: 0.8rem; }
         renderSidebar();
       }, "quiet"));
     }
+
+    var configured = !!(sync.repo && sync.token);
+    var sb = el("button", "navitem quiet syncbtn");
+    sb.type = "button";
+    sb.appendChild(refreshIcon(syncBusy));
+    sb.appendChild(el("span", "t", configured ? "Aktualisieren" : "Online sichern einrichten"));
+    sb.disabled = syncBusy;
+    sb.addEventListener("click", function () { if (configured) syncNow(); else showView("settings"); });
+    sideNav.appendChild(sb);
+    var note = configured ? (syncBusy ? "Gleiche ab …" : (syncMsg || (sync.last ? "Zuletzt: " + sync.last : "Noch nicht abgeglichen"))) : "";
+    if (note) sideNav.appendChild(el("div", "syncnote" + (syncFail ? " fail" : ""), note));
 
     var inSettings = currentView === "settings";
     settingsBtn.classList.toggle("active", inSettings);
@@ -2277,11 +2309,14 @@ footer { color: var(--muted); font-size: 0.8rem; }
     $("syncRepo").value = sync.repo;
     $("syncNow").disabled = !(sync.repo && sync.token);
     $("syncClear").hidden = !(sync.repo || sync.token);
+    renderSidebar();
   }
 
   function syncNow() {
     var out = $("syncStatus"), btn = $("syncNow");
     btn.disabled = true;
+    syncBusy = true; syncFail = false;
+    renderSidebar();
     out.textContent = "Gleiche ab …";
     var sha = null;
     ghFetch("", { cache: "no-store" }).then(function (r) {
@@ -2313,9 +2348,15 @@ footer { color: var(--muted); font-size: 0.8rem; }
       sync.last = new Date().toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
       saveSync();
       renderSyncState();
+      syncBusy = false; syncFail = false;
+      syncMsg = "Aktualisiert um " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + (added ? " (" + added + " neu)" : "");
+      renderSidebar();
       out.textContent = "Abgeglichen. " + (added ? added + (added === 1 ? " neues Paper" : " neue Paper") + " von GitHub geholt, alles ist wieder gespeichert." : "Nichts Neues von GitHub, deine Sammlungen sind gesichert.");
     }).catch(function (e) {
       var msg = e && e.message ? e.message : "";
+      syncBusy = false; syncFail = true;
+      syncMsg = "Fehlgeschlagen, Details in den Einstellungen";
+      renderSidebar();
       out.textContent = /^(GitHub|Der |Das |Gleichzeitige|Die Datei)/.test(msg) ? msg : "Keine Verbindung zu GitHub. Prüfe dein Netz und versuche es noch einmal.";
       renderSyncState();
     });
