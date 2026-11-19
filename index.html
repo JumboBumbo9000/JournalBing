@@ -25,6 +25,8 @@
   --closed-bg: #e8edef;
   --warn: #9a3412;
   --warn-bg: #fdeadd;
+  --red: #c62828;
+  --red-bg: #fde7e7;
   --heart: #c0264f;
   --heart-bg: #fde4ea;
   --scrim: rgba(10, 25, 31, 0.45);
@@ -50,6 +52,8 @@
     --closed-bg: #22343c;
     --warn: #f4a972;
     --warn-bg: #3a2616;
+    --red: #ff8a80;
+    --red-bg: #3d1c1c;
     --heart: #ff8aa6;
     --heart-bg: #3b1a25;
     --scrim: rgba(0, 0, 0, 0.6);
@@ -74,6 +78,8 @@
   --closed-bg: #22343c;
   --warn: #f4a972;
   --warn-bg: #3a2616;
+  --red: #ff8a80;
+  --red-bg: #3d1c1c;
   --heart: #ff8aa6;
   --heart-bg: #3b1a25;
   --scrim: rgba(0, 0, 0, 0.6);
@@ -248,6 +254,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   outline-offset: 2px;
 }
 .filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.filters.fgrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.filters.fgrid .field { grid-column: span 3; }
+.filters.fgrid .check { grid-column: span 2; }
 .filters.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .filters .check, .filters select, .filters input[type="date"] {
   height: 44px;
@@ -259,6 +268,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 }
 .filters .check { display: flex; align-items: center; gap: 10px; padding: 0 12px; cursor: pointer; }
 .filters .check:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.filters .check:has(input:disabled) { opacity: 0.5; cursor: default; }
 .filters .check:hover, .filters select:hover, .filters input[type="date"]:hover { border-color: var(--accent); }
 .filters .check input {
   appearance: none;
@@ -302,6 +312,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .filters .check, .filters select { transition: border-color 0.15s, background-color 0.15s; }
 }
 @media (max-width: 960px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .filters.fgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filters.fgrid .field, .filters.fgrid .check { grid-column: span 1; } .filters.fgrid .check:last-of-type { grid-column: 1 / -1; } }
 
 .examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.9rem; color: var(--muted); }
 .chip {
@@ -377,6 +388,17 @@ mark { background: var(--hl); color: inherit; border-radius: 3px; padding: 0 2px
 .badge.oa { background: var(--oa-bg); color: var(--oa); }
 .badge.closed { background: var(--closed-bg); color: var(--closed); }
 .badge.pre { background: var(--warn-bg); color: var(--warn); }
+.retract { display: inline-flex; align-items: center; gap: 5px; margin-right: 8px; font-size: 0.72rem; font-weight: 700; color: var(--red); vertical-align: 2px; white-space: nowrap; }
+.retract .sym { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: var(--red); color: var(--bg); font-size: 0.7rem; line-height: 1; }
+.card.is-retracted { border-color: var(--red); }
+.badge.read { background: var(--accent-soft); color: var(--accent); }
+.badge.imp { background: var(--hl); color: var(--fg); }
+.notepanel { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.notepanel textarea { width: 100%; min-height: 90px; resize: vertical; padding: 10px 12px; font: inherit; font-size: 0.95rem; line-height: 1.5; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.notepanel textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.libfilter { display: flex; flex-wrap: wrap; gap: 6px; }
+.libfilter button { padding: 4px 12px; font-size: 0.85rem; }
+.libfilter button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .actions a { color: var(--accent); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
 .actions a:hover { text-decoration: underline; }
@@ -473,7 +495,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
             <input type="search" id="q" placeholder="Thema, z. B. cellular senescence" aria-label="Suchbegriff" enterkeyhint="search">
             <button class="primary" type="submit">Suchen</button>
           </div>
-          <div class="filters">
+          <div class="filters fgrid">
             <label class="field"><span>Zeitraum</span>
               <select id="period">
                 <option value="0">Alle</option>
@@ -485,13 +507,14 @@ footer { color: var(--muted); font-size: 0.8rem; }
             </label>
             <label class="field"><span>Sortierung</span>
               <select id="sort">
-                <option value="publication_date:desc" selected>Neueste zuerst</option>
-                <option value="cited_by_count:desc">Meistzitiert</option>
+                <option value="cited_by_count:desc" selected>Meistzitiert</option>
+                <option value="publication_date:desc">Neueste zuerst</option>
                 <option value="relevance_score:desc">Beste Treffer</option>
               </select>
             </label>
             <label class="check"><input type="checkbox" id="oa" checked><span>Nur Open Access</span></label>
             <label class="check"><input type="checkbox" id="pre"><span>Mit Preprints</span></label>
+            <label class="check"><input type="checkbox" id="rev"><span>Nur Reviews</span></label>
             <div class="range" id="range" hidden>
               <label class="field"><span>Von</span><input type="date" id="dateFrom" min="1900-01-01"></label>
               <label class="field"><span>Bis</span><input type="date" id="dateTo" min="1900-01-01"></label>
@@ -516,6 +539,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
           </div>
           <div class="manage" id="libManage"></div>
         </div>
+        <div class="libfilter" id="libFilter"></div>
         <ol class="results" id="libList"></ol>
       </section>
 
@@ -582,24 +606,24 @@ footer { color: var(--muted); font-size: 0.8rem; }
   var PER_PAGE = 20;
   var SELECT = [
     "id", "doi", "title", "display_name", "type", "publication_date", "publication_year",
-    "cited_by_count", "open_access", "authorships", "primary_location", "best_oa_location",
+    "cited_by_count", "is_retracted", "open_access", "authorships", "primary_location", "best_oa_location",
     "abstract_inverted_index"
   ].join(",");
   var STORE_KEY = "journalbing.v1";
   var FAV = "fav";
 
   var $ = function (id) { return document.getElementById(id); };
-  var form = $("form"), qEl = $("q"), oaEl = $("oa"), preEl = $("pre");
+  var form = $("form"), qEl = $("q"), oaEl = $("oa"), preEl = $("pre"), revEl = $("rev");
   var periodEl = $("period"), sortEl = $("sort"), scopeEl = $("scope"), sourceEl = $("source");
   var rangeEl = $("range"), fromEl = $("dateFrom"), toEl = $("dateTo");
   var statusEl = $("status"), resultsEl = $("results"), moreEl = $("more"), examplesEl = $("examples");
   var viewSearch = $("viewSearch"), viewLib = $("viewLib"), viewSettings = $("viewSettings");
   var noticeEl = $("notice");
   var libTitle = $("libTitle"), libCount = $("libCount"), libManage = $("libManage"), libList = $("libList");
-  var libStatus = $("libStatus"), sideNav = $("sideNav");
+  var libStatus = $("libStatus"), sideNav = $("sideNav"), libFilterEl = $("libFilter");
   var sidebar = $("sidebar"), backdrop = $("backdrop"), menuBtn = $("menuBtn");
   var settingsBtn = $("settingsBtn"), keyInput = $("keyInput"), keySave = $("keySave"), keyClear = $("keyClear"), keyState = $("keyState");
-  var VERSION = "Version vom 19.11.2026, 17:55 Uhr";
+  var VERSION = "Version 2026.11.19-6";
 
   var state = {
     loading: false, query: "", source: "both", shown: 0, seen: {},
@@ -734,6 +758,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       date: work.publication_date || "",
       type: work.type || "",
       isOa: !!oa.is_oa,
+      retracted: !!work.is_retracted,
       cited: work.cited_by_count || 0,
       authors: {
         first: list.length ? person(list[0]) : null,
@@ -765,6 +790,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       date: String(rec.date || ""),
       type: String(rec.type || ""),
       isOa: !!rec.isOa,
+      retracted: !!rec.retracted,
       cited: Number(rec.cited) || 0,
       authors: { first: cleanPerson(a.first), last: cleanPerson(a.last), count: Number(a.count) || 0 },
       insts: cleanInsts(rec.insts),
@@ -911,11 +937,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
         var s = JSON.parse(raw);
         if (s && Array.isArray(s.collections) && s.papers && typeof s.papers === "object") {
           ensureFav(s);
+          if (!s.notes || typeof s.notes !== "object") s.notes = {};
           return s;
         }
       }
     } catch (e) { /* leerer Start */ }
-    var fresh = { collections: [], papers: {} };
+    var fresh = { collections: [], papers: {}, notes: {} };
     ensureFav(fresh);
     return fresh;
   }
@@ -942,6 +969,31 @@ footer { color: var(--muted); font-size: 0.8rem; }
   }
 
   function inCol(col, paperId) { return !!col && col.items.indexOf(paperId) !== -1; }
+
+  // ---------- Notizen und Lesestatus ----------
+
+  var STATUSES = [["unread", "Ungelesen"], ["read", "Gelesen"], ["important", "Wichtig"]];
+  var libFilter = "all";
+
+  function cleanMeta(m) {
+    if (!m || typeof m !== "object") return null;
+    var st = /^(unread|read|important)$/.test(m.status) ? m.status : "unread";
+    var note = typeof m.note === "string" ? m.note.slice(0, 4000) : "";
+    return st === "unread" && !note.trim() ? null : { status: st, note: note };
+  }
+
+  function getMeta(id) { return store.notes[id] || { status: "unread", note: "" }; }
+
+  function setMeta(id, patch) {
+    var cur = getMeta(id);
+    var next = cleanMeta({ status: patch.status !== undefined ? patch.status : cur.status, note: patch.note !== undefined ? patch.note : cur.note });
+    if (next) store.notes[id] = next; else delete store.notes[id];
+    persist();
+  }
+
+  function isSaved(id) {
+    return store.collections.some(function (c) { return c.items.indexOf(id) !== -1; });
+  }
 
   function gc() {
     var used = {};
@@ -1146,6 +1198,79 @@ footer { color: var(--muted); font-size: 0.8rem; }
     });
   }
 
+  // ---------- Zitationsnetz (Ähnlich / Zitiert von / Zitiert) ----------
+
+  var MINI_SELECT = "id,display_name,publication_date,cited_by_count,primary_location,doi";
+
+  function resolveWorkId(rec) {
+    var m = /openalex\.org\/(W\d+)/i.exec(rec.id || "");
+    if (m) return Promise.resolve(m[1]);
+    var d = rec.doi ? String(rec.doi).replace(/^https?:\/\/(dx\.)?doi\.org\//i, "") : "";
+    if (!d) return Promise.reject(new Error("no-id"));
+    return getJSON(API + "works/doi:" + encodeURI(d) + "?select=id").then(function (w) {
+      var mm = /(W\d+)/.exec((w && w.id) || "");
+      if (!mm) throw new Error("no-id");
+      return mm[1];
+    });
+  }
+
+  var REL_MODES = [
+    { label: "Ähnlich", hint: "Von OpenAlex als thematisch verwandt eingestuft." },
+    { label: "Zitiert von", hint: "Neuere Paper, die dieses Paper zitieren (meistzitiert zuerst)." },
+    { label: "Zitiert", hint: "Paper, auf die sich dieses Paper stützt (meistzitiert zuerst)." }
+  ];
+
+  function relatedList(workId, idx) {
+    var base = API + "works?per-page=";
+    if (idx === 1) return getJSON(base + "5&sort=cited_by_count:desc&filter=cites:" + workId + "&select=" + MINI_SELECT).then(function (d) { return d.results || []; });
+    if (idx === 2) return getJSON(base + "5&sort=cited_by_count:desc&filter=cited_by:" + workId + "&select=" + MINI_SELECT).then(function (d) { return d.results || []; });
+    return getJSON(API + "works/" + workId + "?select=related_works").then(function (w) {
+      var ids = ((w && w.related_works) || []).map(function (u) { return (/(W\d+)/.exec(u) || [])[1]; }).filter(Boolean).slice(0, 10);
+      if (!ids.length) return [];
+      return getJSON(base + "10&filter=openalex:" + ids.join("|") + "&select=" + MINI_SELECT).then(function (d) {
+        return (d.results || []).sort(function (a, b) { return (b.cited_by_count || 0) - (a.cited_by_count || 0); }).slice(0, 5);
+      });
+    });
+  }
+
+  function renderRelated(box, rec) {
+    box.innerHTML = "";
+    var seg = el("div", "seg");
+    var mini = el("ul", "mini");
+    var note = el("div", "note");
+    box.appendChild(seg);
+    box.appendChild(mini);
+    box.appendChild(note);
+    var token = 0, buttons = [], idP = null;
+    function load(idx) {
+      var my = ++token;
+      buttons.forEach(function (b, i) { b.setAttribute("aria-pressed", i === idx ? "true" : "false"); });
+      note.textContent = REL_MODES[idx].hint;
+      mini.innerHTML = "";
+      mini.appendChild(el("li", "m", "Lade Paper …"));
+      if (!idP) idP = resolveWorkId(rec);
+      idP.then(function (wid) { return relatedList(wid, idx); }).then(function (works) {
+        if (my === token) renderMiniWorks(mini, works);
+      }).catch(function (err) {
+        if (my !== token) return;
+        if (err && err.message === "no-id") idP = null;
+        mini.innerHTML = "";
+        mini.appendChild(el("li", "m", err && err.message === "no-id"
+          ? "Dieses Paper ist in OpenAlex nicht eindeutig zu finden (keine DOI)."
+          : "Die Paper konnten nicht geladen werden. " + describeError(err)));
+      });
+    }
+    REL_MODES.forEach(function (m, idx) {
+      var b = el("button", "ghost", m.label);
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { load(idx); });
+      buttons.push(b);
+      seg.appendChild(b);
+    });
+    load(0);
+  }
+
   function renderEntity(box, kind, id, name, ctx) {
     box.innerHTML = "";
     box.appendChild(el("h4", null, name));
@@ -1249,6 +1374,16 @@ footer { color: var(--muted); font-size: 0.8rem; }
     var hl = ctx === "search" ? termRegex(parseTerms(state.query)) : null;
 
     var h = el("h2");
+    if (rec.retracted) {
+      li.classList.add("is-retracted");
+      var rt = el("span", "retract");
+      rt.title = "Dieses Paper wurde zurückgezogen. Die Ergebnisse gelten als nicht verlässlich.";
+      var sym = el("span", "sym", "!");
+      sym.setAttribute("aria-hidden", "true");
+      rt.appendChild(sym);
+      rt.appendChild(document.createTextNode("Zurückgezogen"));
+      h.appendChild(rt);
+    }
     if (landing) {
       var ta = externalLink("", landing);
       appendMarked(ta, rec.title, hl);
@@ -1339,6 +1474,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
     if (rec.date) meta.appendChild(el("span", null, formatDate(rec.date)));
     if (rec.type === "preprint") meta.appendChild(el("span", "badge pre", "Preprint"));
     meta.appendChild(el("span", rec.isOa ? "badge oa" : "badge closed", rec.isOa ? "Open Access" : "Kein freier Zugang"));
+    var stBadge = el("span");
+    meta.appendChild(stBadge);
     var cit = el("span");
     cit.appendChild(el("span", "num", String(rec.cited || 0)));
     cit.appendChild(document.createTextNode(" Zitationen"));
@@ -1387,6 +1524,16 @@ footer { color: var(--muted); font-size: 0.8rem; }
     absBtn.setAttribute("aria-expanded", "false");
     actions.appendChild(absBtn);
 
+    var relBtn = el("button", "toggle", "Verwandt");
+    relBtn.type = "button";
+    relBtn.setAttribute("aria-expanded", "false");
+    actions.appendChild(relBtn);
+
+    var noteBtn = el("button", "toggle", "Notiz & Status");
+    noteBtn.type = "button";
+    noteBtn.setAttribute("aria-expanded", "false");
+    actions.appendChild(noteBtn);
+
     var pdf = safeUrl(rec.pdf);
     if (pdf) actions.appendChild(externalLink("PDF", pdf));
     var doi = safeUrl(rec.doi);
@@ -1406,7 +1553,70 @@ footer { color: var(--muted); font-size: 0.8rem; }
     panel.hidden = true;
     li.appendChild(panel);
 
+    var relPanel = el("div", "detail");
+    relPanel.hidden = true;
+    li.appendChild(relPanel);
+    relBtn.addEventListener("click", function () {
+      var open = relPanel.hidden;
+      relPanel.hidden = !open;
+      relBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) renderRelated(relPanel, rec); else relPanel.innerHTML = "";
+    });
+
+    var notePanel = el("div", "notepanel");
+    notePanel.hidden = true;
+    li.appendChild(notePanel);
+
+    function updateMetaUi() {
+      var saved = isSaved(rec.id);
+      var m = getMeta(rec.id);
+      noteBtn.hidden = !saved;
+      if (!saved && !notePanel.hidden) { notePanel.hidden = true; noteBtn.setAttribute("aria-expanded", "false"); }
+      noteBtn.textContent = saved && m.note.trim() ? "Notiz & Status ✎" : "Notiz & Status";
+      stBadge.className = saved && m.status === "read" ? "badge read" : saved && m.status === "important" ? "badge imp" : "";
+      stBadge.textContent = saved && m.status === "read" ? "Gelesen" : saved && m.status === "important" ? "★ Wichtig" : "";
+    }
+
+    function buildNotePanel() {
+      notePanel.innerHTML = "";
+      var seg = el("div", "seg");
+      var cur = getMeta(rec.id).status;
+      STATUSES.forEach(function (st) {
+        var b = el("button", "toggle", st[1]);
+        b.type = "button";
+        b.setAttribute("aria-pressed", cur === st[0] ? "true" : "false");
+        b.addEventListener("click", function () {
+          setMeta(rec.id, { status: st[0] });
+          buildNotePanel();
+          updateMetaUi();
+          if (ctx === "library" && libFilter !== "all") renderLibrary();
+          else if (ctx === "library") renderLibraryHead();
+        });
+        seg.appendChild(b);
+      });
+      notePanel.appendChild(seg);
+
+      var ta = document.createElement("textarea");
+      ta.maxLength = 4000;
+      ta.placeholder = "Notiz zu diesem Paper …";
+      ta.setAttribute("aria-label", "Notiz");
+      ta.value = getMeta(rec.id).note;
+      var timer = null;
+      var save = function () { clearTimeout(timer); setMeta(rec.id, { note: ta.value }); updateMetaUi(); };
+      ta.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(save, 500); });
+      ta.addEventListener("blur", save);
+      notePanel.appendChild(ta);
+    }
+
+    noteBtn.addEventListener("click", function () {
+      var open = notePanel.hidden;
+      notePanel.hidden = !open;
+      noteBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) buildNotePanel();
+    });
+
     function updateFav() {
+      updateMetaUi();
       var on = inCol(colById(FAV), rec.id);
       favBtn.setAttribute("aria-pressed", on ? "true" : "false");
       heart.textContent = on ? "♥" : "♡";
@@ -1498,7 +1708,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   function buildUrl(page) {
     var filters = [];
-    filters.push("type:" + (preEl.checked ? "article|review|preprint" : "article|review"));
+    filters.push("type:" + (revEl.checked ? "review" : preEl.checked ? "article|review|preprint" : "article|review"));
     // Der Suchbegriff muss im Titel (und Abstract) vorkommen, nicht nur irgendwo im Volltext
     var ft = encodeURIComponent(state.query.replace(/[,|]/g, " ").trim());
     if (scopeEl.value === "ta") filters.push("title_and_abstract.search:" + ft);
@@ -1547,7 +1757,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
       return '"' + t + '"';
     }).join(" AND ");
     var parts = [expr || '"' + state.query.replace(/"/g, "") + '"'];
-    parts.push(preEl.checked ? "(SRC:MED OR SRC:PMC OR SRC:PPR)" : "(SRC:MED OR SRC:PMC)");
+    parts.push(preEl.checked && !revEl.checked ? "(SRC:MED OR SRC:PMC OR SRC:PPR)" : "(SRC:MED OR SRC:PMC)");
+    if (revEl.checked) parts.push('PUB_TYPE:"Review"');
     if (oaEl.checked) parts.push("OPEN_ACCESS:y");
     var r = dateRange();
     if (r.from || r.to) parts.push("FIRST_PDATE:[" + (r.from || "1900-01-01") + " TO " + (r.to || ymd(new Date())) + "]");
@@ -1605,6 +1816,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       date: r.firstPublicationDate || (r.pubYear ? String(r.pubYear) : ""),
       type: preprint ? "preprint" : "article",
       isOa: r.isOpenAccess === "Y",
+      retracted: ((r.pubTypeList && r.pubTypeList.pubType) || []).some(function (t) { return /retracted/i.test(String(t)) && !/retraction of/i.test(String(t)); }),
       cited: Number(r.citedByCount) || 0,
       authors: {
         first: names.length ? { name: names[0], id: null } : null,
@@ -1645,6 +1857,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     if (!a.pdf && b.pdf) a.pdf = b.pdf;
     if (a.source && !a.source.name && b.source && b.source.name) a.source = b.source;
     if (!a.isOa && b.isOa) a.isOa = true;
+    if (b.retracted) a.retracted = true;
     if (!(a.insts && a.insts.length)) a.affil = b.affil;
     a.via = "both";
     return a;
@@ -1864,6 +2077,19 @@ footer { color: var(--muted); font-size: 0.8rem; }
     libManage.appendChild(delBtn);
   }
 
+  function renderLibFilter(cur) {
+    libFilterEl.innerHTML = "";
+    libFilterEl.hidden = !cur.items.length;
+    [["all", "Alle"]].concat(STATUSES).forEach(function (st) {
+      var n = st[0] === "all" ? cur.items.length : cur.items.filter(function (id) { return getMeta(id).status === st[0]; }).length;
+      var b = el("button", "toggle", st[1] + " " + n);
+      b.type = "button";
+      b.setAttribute("aria-pressed", libFilter === st[0] ? "true" : "false");
+      b.addEventListener("click", function () { libFilter = st[0]; renderLibrary(); });
+      libFilterEl.appendChild(b);
+    });
+  }
+
   function renderLibrary() {
     if (!colById(currentColId)) currentColId = FAV;
     var cur = colById(currentColId);
@@ -1871,13 +2097,20 @@ footer { color: var(--muted); font-size: 0.8rem; }
     renderLibraryHead();
     renderManage(cur);
 
+    renderLibFilter(cur);
     libList.innerHTML = "";
     var shown = 0;
     cur.items.forEach(function (id) {
       var rec = store.papers[id];
-      if (rec) { libList.appendChild(renderCard(rec, "library")); shown++; }
+      if (!rec) return;
+      if (libFilter !== "all" && getMeta(id).status !== libFilter) return;
+      libList.appendChild(renderCard(rec, "library")); shown++;
     });
-    if (!shown) {
+    if (!shown && libFilter !== "all" && cur.items.length) {
+      var lf = document.createElement("li");
+      lf.appendChild(el("div", "empty", "Kein Paper mit diesem Status in dieser Sammlung."));
+      libList.appendChild(lf);
+    } else if (!shown) {
       var li = document.createElement("li");
       li.appendChild(el("div", "empty", cur.id === FAV
         ? "Noch keine Favoriten. Tippe bei einem Paper auf das Herz, dann erscheint es hier."
@@ -1890,7 +2123,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   function exportData() {
     try {
-      var payload = JSON.stringify({ app: "journalbing", version: 2, collections: store.collections, papers: store.papers }, null, 2);
+      var payload = JSON.stringify({ app: "journalbing", version: 3, collections: store.collections, papers: store.papers, notes: store.notes }, null, 2);
       var blob = new Blob([payload], { type: "application/json" });
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
@@ -1934,6 +2167,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
         if (target.items.indexOf(pid) === -1) target.items.push(pid);
       });
     });
+    if (data.notes && typeof data.notes === "object") {
+      Object.keys(data.notes).forEach(function (pid) {
+        var m = cleanMeta(data.notes[pid]);
+        if (m && store.papers[pid] && !store.notes[pid]) store.notes[pid] = m;
+      });
+    }
     persist();
     if (currentView === "lib") renderLibrary();
     renderSidebar();
@@ -1945,9 +2184,10 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   form.addEventListener("submit", function (e) { e.preventDefault(); startSearch(); });
   moreEl.addEventListener("click", function () { load(true); });
-  [oaEl, preEl, sortEl, fromEl, toEl].forEach(function (c) {
+  [oaEl, preEl, revEl, sortEl, fromEl, toEl].forEach(function (c) {
     c.addEventListener("change", function () { if (state.query) startSearch(); });
   });
+  revEl.addEventListener("change", function () { preEl.disabled = revEl.checked; });
   periodEl.addEventListener("change", function () {
     var custom = periodEl.value === "custom";
     rangeEl.hidden = !custom;
