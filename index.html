@@ -390,6 +390,12 @@ mark { background: var(--hl); color: inherit; border-radius: 3px; padding: 0 2px
 .notepanel { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
 .notepanel textarea { width: 100%; min-height: 90px; resize: vertical; padding: 10px 12px; font: inherit; font-size: 0.95rem; line-height: 1.5; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
 .notepanel textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.howto { font-size: 0.9rem; color: var(--muted); }
+.howto summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.howto ol { margin: 10px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.howto b { color: var(--fg); }
+.setgroup .row + .row { margin-top: 8px; }
+button[disabled] { opacity: 0.5; cursor: default; }
 .libfilter { display: flex; flex-wrap: wrap; gap: 6px; }
 .libfilter button { padding: 4px 12px; font-size: 0.85rem; }
 .libfilter button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
@@ -576,6 +582,34 @@ footer { color: var(--muted); font-size: 0.8rem; }
         </div>
 
         <div class="setgroup">
+          <h3>Abgleich (iPad &harr; PC)</h3>
+          <div class="row">
+            <input type="text" id="syncRepo" placeholder="dein-name/journalbing-daten" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Privates Repository">
+          </div>
+          <div class="row">
+            <input type="password" id="syncToken" placeholder="Zugangsschl&uuml;ssel einf&uuml;gen" autocomplete="off" aria-label="GitHub-Zugangsschl&uuml;ssel">
+            <button class="ghost" type="button" id="syncSave">Speichern</button>
+          </div>
+          <div class="row">
+            <button class="primary" type="button" id="syncNow">Jetzt abgleichen</button>
+            <button class="ghost" type="button" id="syncClear" hidden>Verbindung entfernen</button>
+          </div>
+          <p class="hint" id="syncState"></p>
+          <div class="status" id="syncStatus" role="status" aria-live="polite"></div>
+          <details class="howto">
+            <summary>Einrichtung in 5 Schritten</summary>
+            <ol>
+              <li>Auf GitHub ein neues <b>privates</b> Repository anlegen, z.&nbsp;B. <i>journalbing-daten</i>, mit Haken bei &bdquo;Add a README&ldquo;.</li>
+              <li>GitHub &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens &rarr; Fine-grained tokens &rarr; Generate new token.</li>
+              <li>Bei &bdquo;Repository access&ldquo; nur dieses eine Repository w&auml;hlen. Unter Permissions &rarr; Repository permissions &rarr; <b>Contents: Read and write</b> einstellen.</li>
+              <li>Den Schl&uuml;ssel kopieren und oben einf&uuml;gen, dazu den Repository-Namen (<i>dein-name/journalbing-daten</i>).</li>
+              <li>Auf jedem Ger&auml;t einmal einrichten. Danach reicht &bdquo;Jetzt abgleichen&ldquo;.</li>
+            </ol>
+            <p class="hint">Der Abgleich f&uuml;gt zusammen: Was auf einem Ger&auml;t neu ist, kommt aufs andere. Entfernte Paper kommen beim n&auml;chsten Abgleich vom anderen Ger&auml;t zur&uuml;ck, solange sie dort noch gespeichert sind. Der Schl&uuml;ssel liegt nur in diesem Browser. Lege ihn nie in das &ouml;ffentliche JournalBing-Repository.</p>
+          </details>
+        </div>
+
+        <div class="setgroup">
           <h3>Sammlungen sichern</h3>
           <div class="row">
             <button class="ghost" type="button" id="exportBtn">Exportieren</button>
@@ -621,7 +655,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   var libStatus = $("libStatus"), sideNav = $("sideNav"), libFilterEl = $("libFilter");
   var sidebar = $("sidebar"), backdrop = $("backdrop"), menuBtn = $("menuBtn");
   var settingsBtn = $("settingsBtn"), keyInput = $("keyInput"), keySave = $("keySave"), keyClear = $("keyClear"), keyState = $("keyState");
-  var VERSION = "Version 2026.11.19-8";
+  var VERSION = "Version 2026.11.19-9";
 
   var state = {
     loading: false, query: "", source: "both", shown: 0, seen: {},
@@ -1127,7 +1161,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     viewSettings.hidden = name !== "settings";
     libStatus.textContent = "";
     if (name === "lib") renderLibrary();
-    if (name === "settings") renderKeyState();
+    if (name === "settings") { renderKeyState(); renderSyncState(); }
     renderSidebar();
     closeDrawer();
     window.scrollTo(0, 0);
@@ -2153,13 +2187,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
     }
   }
 
-  function importData(text) {
-    var data;
-    try { data = JSON.parse(text); } catch (e) { libStatus.textContent = "Die Datei ist keine gültige JournalBing-Datei."; return; }
-    if (!data || !Array.isArray(data.collections) || !data.papers || typeof data.papers !== "object") {
-      libStatus.textContent = "Die Datei ist keine gültige JournalBing-Datei.";
-      return;
-    }
+  function validData(data) {
+    return !!data && Array.isArray(data.collections) && !!data.papers && typeof data.papers === "object";
+  }
+
+  // fuehrt fremde Daten mit den lokalen zusammen (nur Hinzufuegen, nichts wird geloescht); gibt Zahl neuer Paper zurueck
+  function mergeData(data) {
     var before = Object.keys(store.papers).length;
     data.collections.forEach(function (ic) {
       if (!ic || typeof ic.name !== "string" || !Array.isArray(ic.items)) return;
@@ -2190,8 +2223,102 @@ footer { color: var(--muted); font-size: 0.8rem; }
     persist();
     if (currentView === "lib") renderLibrary();
     renderSidebar();
-    var added = Object.keys(store.papers).length - before;
+    return Object.keys(store.papers).length - before;
+  }
+
+  function importData(text) {
+    var data;
+    try { data = JSON.parse(text); } catch (e) { libStatus.textContent = "Die Datei ist keine gültige JournalBing-Datei."; return; }
+    if (!validData(data)) { libStatus.textContent = "Die Datei ist keine gültige JournalBing-Datei."; return; }
+    var added = mergeData(data);
     libStatus.textContent = "Import fertig. " + added + (added === 1 ? " neues Paper" : " neue Paper") + " hinzugefügt.";
+  }
+
+  // ---------- Abgleich ueber ein privates GitHub-Repository ----------
+
+  var SYNC_KEY = "journalbing.sync";
+  var SYNC_FILE = "sammlungen.json";
+  var sync = { repo: "", token: "", last: "" };
+  try { var sv = JSON.parse(localStorage.getItem(SYNC_KEY) || "{}"); sync.repo = String(sv.repo || ""); sync.token = String(sv.token || ""); sync.last = String(sv.last || ""); } catch (e) { /* kein Abgleich eingerichtet */ }
+
+  function saveSync() {
+    try { localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); } catch (e) { /* nur bis zum Neuladen */ }
+  }
+
+  function b64encode(str) {
+    var bytes = new TextEncoder().encode(str), bin = "";
+    for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+
+  function ghFetch(path, opts, raw) {
+    opts = opts || {};
+    opts.headers = Object.assign({
+      "Authorization": "Bearer " + sync.token,
+      "Accept": raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    }, opts.headers || {});
+    return fetch("https://api.github.com/repos/" + sync.repo + "/contents/" + SYNC_FILE + path, opts);
+  }
+
+  function syncError(r) {
+    if (r.status === 401) return "GitHub lehnt den Zugangsschlüssel ab (abgelaufen oder falsch kopiert).";
+    if (r.status === 403) return "Der Zugangsschlüssel darf hier nicht schreiben. Prüfe die Berechtigung „Contents: Read and write“.";
+    if (r.status === 404) return "Das Repository wurde nicht gefunden. Prüfe Name und ob der Schlüssel für genau dieses Repository gilt.";
+    if (r.status === 409 || r.status === 422) return "Gleichzeitige Änderung erkannt. Bitte noch einmal abgleichen.";
+    return "GitHub antwortet mit Fehler " + r.status + ".";
+  }
+
+  function renderSyncState() {
+    var st = $("syncState");
+    st.textContent = sync.repo && sync.token
+      ? "Verbunden mit " + sync.repo + (sync.last ? ". Letzter Abgleich: " + sync.last + "." : ". Noch nicht abgeglichen.")
+      : "Noch nicht eingerichtet.";
+    $("syncRepo").value = sync.repo;
+    $("syncNow").disabled = !(sync.repo && sync.token);
+    $("syncClear").hidden = !(sync.repo || sync.token);
+  }
+
+  function syncNow() {
+    var out = $("syncStatus"), btn = $("syncNow");
+    btn.disabled = true;
+    out.textContent = "Gleiche ab …";
+    var sha = null;
+    ghFetch("", { cache: "no-store" }).then(function (r) {
+      if (r.status === 404) { return null; }
+      if (!r.ok) throw new Error(syncError(r));
+      return r.json().then(function (meta) {
+        sha = meta.sha;
+        return ghFetch("", { cache: "no-store" }, true).then(function (rr) {
+          if (!rr.ok) throw new Error(syncError(rr));
+          return rr.text();
+        });
+      });
+    }).then(function (text) {
+      var added = 0;
+      if (text) {
+        var data;
+        try { data = JSON.parse(text); } catch (e) { throw new Error("Die Datei in GitHub ist beschädigt."); }
+        if (!validData(data)) throw new Error("Die Datei in GitHub hat ein unbekanntes Format.");
+        added = mergeData(data);
+      }
+      var payload = JSON.stringify({ app: "journalbing", version: 3, collections: store.collections, papers: store.papers, notes: store.notes });
+      var body = { message: "Sammlungen abgeglichen", content: b64encode(payload) };
+      if (sha) body.sha = sha;
+      return ghFetch("", { method: "PUT", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }).then(function (r) {
+        if (!r.ok) throw new Error(syncError(r));
+        return added;
+      });
+    }).then(function (added) {
+      sync.last = new Date().toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+      saveSync();
+      renderSyncState();
+      out.textContent = "Abgeglichen. " + (added ? added + (added === 1 ? " neues Paper" : " neue Paper") + " von GitHub geholt, alles ist wieder gespeichert." : "Nichts Neues von GitHub, deine Sammlungen sind gesichert.");
+    }).catch(function (e) {
+      var msg = e && e.message ? e.message : "";
+      out.textContent = /^(GitHub|Der |Das |Gleichzeitige|Die Datei)/.test(msg) ? msg : "Keine Verbindung zu GitHub. Prüfe dein Netz und versuche es noch einmal.";
+      renderSyncState();
+    });
   }
 
   // ---------- Ereignisse ----------
@@ -2249,6 +2376,25 @@ footer { color: var(--muted); font-size: 0.8rem; }
   });
   keyInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); keySave.click(); } });
   keyClear.addEventListener("click", function () { saveKey(""); renderKeyState(); });
+  $("syncSave").addEventListener("click", function () {
+    var repo = $("syncRepo").value.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
+    var tok = $("syncToken").value.trim();
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { $("syncStatus").textContent = "Der Repository-Name sollte so aussehen: dein-name/journalbing-daten"; return; }
+    if (!tok && !sync.token) { $("syncStatus").textContent = "Bitte füge auch den Zugangsschlüssel ein."; return; }
+    sync.repo = repo;
+    if (tok) sync.token = tok;
+    saveSync();
+    $("syncToken").value = "";
+    $("syncStatus").textContent = "Gespeichert. Jetzt kannst du abgleichen.";
+    renderSyncState();
+  });
+  $("syncNow").addEventListener("click", syncNow);
+  $("syncClear").addEventListener("click", function () {
+    sync = { repo: "", token: "", last: "" };
+    try { localStorage.removeItem(SYNC_KEY); } catch (e) { /* egal */ }
+    $("syncStatus").textContent = "Verbindung entfernt. Deine Sammlungen bleiben hier erhalten.";
+    renderSyncState();
+  });
   $("exportBtn").addEventListener("click", exportData);
   $("importBtn").addEventListener("click", function () { $("importFile").click(); });
   $("versionLabel").textContent = VERSION;
