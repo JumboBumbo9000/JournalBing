@@ -16,6 +16,9 @@
   --accent: #0b6e84;
   --accent-fg: #ffffff;
   --accent-soft: #dcedf1;
+  --tint: #e8f2f5;
+  --tint-line: #bcd6de;
+  --hl: #ffe9a0;
   --oa: #17784a;
   --oa-bg: #e0f3e8;
   --closed: #5a6b73;
@@ -38,6 +41,9 @@
     --accent: #5bc0d6;
     --accent-fg: #07222a;
     --accent-soft: #1b3a44;
+    --tint: #1a2d35;
+    --tint-line: #2f4a55;
+    --hl: #5b4a14;
     --oa: #6fd39d;
     --oa-bg: #17382a;
     --closed: #93a6ae;
@@ -59,6 +65,9 @@
   --accent: #5bc0d6;
   --accent-fg: #07222a;
   --accent-soft: #1b3a44;
+  --tint: #1a2d35;
+  --tint-line: #2f4a55;
+  --hl: #5b4a14;
   --oa: #6fd39d;
   --oa-bg: #17382a;
   --closed: #93a6ae;
@@ -141,6 +150,7 @@ h4 { font-size: 1rem; }
 .newrow { display: flex; gap: 6px; padding: 4px 4px 4px 12px; }
 .newrow input { flex: 1; padding: 7px 10px; font-size: 0.9rem; min-width: 0; }
 .sidehint { color: var(--muted); font-size: 0.8rem; padding: 6px 12px 0; }
+.sidehint a { color: var(--accent); font-weight: 600; overflow-wrap: anywhere; }
 .sidestatus { color: var(--muted); font-size: 0.85rem; padding: 6px 12px 0; min-height: 1.4em; }
 
 .main {
@@ -204,7 +214,7 @@ section.view { display: flex; flex-direction: column; gap: 20px; }
 /* ---------- Formulare ---------- */
 form.search { display: flex; flex-direction: column; gap: 12px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
-input[type="search"], input[type="text"], select {
+input[type="search"], input[type="text"], input[type="password"], select {
   font: inherit;
   color: var(--fg);
   background: var(--bg);
@@ -228,10 +238,60 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.filters { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; font-size: 0.9rem; color: var(--muted); }
-.filters label { display: flex; align-items: center; gap: 6px; }
-.filters select { padding: 7px 10px; font-size: 0.9rem; }
-.filters input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+.filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.filters .check, .filters select, .filters input[type="date"] {
+  height: 44px;
+  background: var(--tint);
+  border: 1px solid var(--tint-line);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  color: var(--fg);
+}
+.filters .check { display: flex; align-items: center; gap: 10px; padding: 0 12px; cursor: pointer; }
+.filters .check:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.filters .check:hover, .filters select:hover, .filters input[type="date"]:hover { border-color: var(--accent); }
+.filters .check input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: none;
+  display: grid;
+  place-content: center;
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.filters .check input::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  background: var(--accent-fg);
+  clip-path: polygon(14% 52%, 0 66%, 36% 100%, 100% 22%, 85% 8%, 36% 72%);
+  transform: scale(0);
+}
+.filters .check input:checked { background: var(--accent); }
+.filters .check input:checked::before { transform: scale(1); }
+.filters .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.filters .field > span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.filters select {
+  width: 100%;
+  padding: 0 34px 0 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%230b6e84' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.filters input[type="date"] { width: 100%; padding: 0 12px; font-family: inherit; }
+.filters .range { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (prefers-reduced-motion: no-preference) {
+  .filters .check input::before { transition: transform 0.12s ease; }
+  .filters .check, .filters select { transition: border-color 0.15s, background-color 0.15s; }
+}
+@media (max-width: 960px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.9rem; color: var(--muted); }
 .chip {
@@ -246,6 +306,20 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .chip[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); }
 
 .status { color: var(--muted); font-size: 0.9rem; min-height: 1.4em; }
+.status.loading { color: var(--accent); font-weight: 600; display: flex; align-items: center; }
+.dots { display: inline-flex; align-items: center; gap: 5px; margin-left: 10px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: block; opacity: 0.55; }
+.results.busy { opacity: 0.45; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .dots i { animation: dotbounce 0.9s infinite ease-in-out; }
+  .dots i:nth-child(2) { animation-delay: 0.15s; }
+  .dots i:nth-child(3) { animation-delay: 0.3s; }
+  .results { transition: opacity 0.2s; }
+}
+@keyframes dotbounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.55; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
 .error { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 12px 14px; font-size: 0.95rem; }
 
 /* ---------- Karten ---------- */
@@ -281,6 +355,14 @@ button.linkbtn:hover, button.linkbtn[aria-expanded="true"] { color: var(--accent
 .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 0.85rem; color: var(--muted); }
 .meta .num { font-variant-numeric: tabular-nums; color: var(--fg); font-weight: 600; }
 .meta .journal { color: var(--fg); font-weight: 500; }
+mark { background: var(--hl); color: inherit; border-radius: 3px; padding: 0 2px; }
+.hits { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.8rem; }
+.hits .hitlabel { color: var(--muted); }
+.hits .hit { background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 2px 10px; font-weight: 600; }
+.hits .hit.weak { background: var(--closed-bg); color: var(--closed); font-weight: 500; }
+.affil { display: flex; flex-direction: column; gap: 2px; font-size: 0.82rem; color: var(--muted); overflow-wrap: anywhere; }
+.meta .via { font-size: 0.78rem; font-style: italic; }
+.snippet { font-size: 0.88rem; color: var(--muted); border-left: 3px solid var(--tint-line); padding-left: 12px; max-width: 65ch; overflow-wrap: anywhere; }
 .badge { border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600; }
 .badge.oa { background: var(--oa-bg); color: var(--oa); }
 .badge.closed { background: var(--closed-bg); color: var(--closed); }
@@ -379,23 +461,42 @@ footer { color: var(--muted); font-size: 0.8rem; }
             <button class="primary" type="submit">Suchen</button>
           </div>
           <div class="filters">
-            <label><input type="checkbox" id="oa" checked> Nur Open Access</label>
-            <label><input type="checkbox" id="pre"> Preprints einbeziehen</label>
-            <label>Zeitraum
+            <label class="field"><span>Quelle</span>
+              <select id="source">
+                <option value="both" selected>OpenAlex + Europe PMC</option>
+                <option value="openalex">Nur OpenAlex</option>
+                <option value="epmc">Nur Europe PMC</option>
+              </select>
+            </label>
+            <label class="field"><span>Suchen in</span>
+              <select id="scope">
+                <option value="ta" selected>Titel &amp; Abstract</option>
+                <option value="title">Nur Titel</option>
+                <option value="full">Volltext (breit)</option>
+              </select>
+            </label>
+            <label class="field"><span>Zeitraum</span>
               <select id="period">
                 <option value="0">Alle</option>
                 <option value="1">Letztes Jahr</option>
                 <option value="3" selected>Letzte 3 Jahre</option>
                 <option value="5">Letzte 5 Jahre</option>
+                <option value="custom">Eigener Zeitraum &hellip;</option>
               </select>
             </label>
-            <label>Sortierung
+            <label class="field"><span>Sortierung</span>
               <select id="sort">
                 <option value="publication_date:desc" selected>Neueste zuerst</option>
                 <option value="cited_by_count:desc">Meistzitiert</option>
                 <option value="relevance_score:desc">Beste Treffer</option>
               </select>
             </label>
+            <label class="check"><input type="checkbox" id="oa" checked><span>Nur Open Access</span></label>
+            <label class="check"><input type="checkbox" id="pre"><span>Mit Preprints</span></label>
+            <div class="range" id="range" hidden>
+              <label class="field"><span>Von</span><input type="date" id="dateFrom" min="1900-01-01"></label>
+              <label class="field"><span>Bis</span><input type="date" id="dateTo" min="1900-01-01"></label>
+            </div>
           </div>
         </form>
 
@@ -419,7 +520,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
         <ol class="results" id="libList"></ol>
       </section>
 
-      <footer>Daten: OpenAlex (api.openalex.org). Zitationszahlen, Open-Access-Status und Autorenprofile können von anderen Datenbanken abweichen.</footer>
+      <footer>Daten: OpenAlex (api.openalex.org) und Europe PMC (europepmc.org). Zitationszahlen und Open-Access-Status können zwischen den Quellen abweichen. Klickbare Autoren- und Institutsprofile gibt es nur bei OpenAlex-Treffern.</footer>
     </div>
   </main>
 </div>
@@ -440,7 +541,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   var $ = function (id) { return document.getElementById(id); };
   var form = $("form"), qEl = $("q"), oaEl = $("oa"), preEl = $("pre");
-  var periodEl = $("period"), sortEl = $("sort");
+  var periodEl = $("period"), sortEl = $("sort"), scopeEl = $("scope"), sourceEl = $("source");
+  var rangeEl = $("range"), fromEl = $("dateFrom"), toEl = $("dateTo");
   var statusEl = $("status"), resultsEl = $("results"), moreEl = $("more"), examplesEl = $("examples");
   var viewSearch = $("viewSearch"), viewLib = $("viewLib");
   var noticeEl = $("notice");
@@ -448,7 +550,11 @@ footer { color: var(--muted); font-size: 0.8rem; }
   var libStatus = $("libStatus"), sideNav = $("sideNav");
   var sidebar = $("sidebar"), backdrop = $("backdrop"), menuBtn = $("menuBtn");
 
-  var state = { page: 1, total: 0, shown: 0, loading: false, query: "" };
+  var state = {
+    loading: false, query: "", source: "both", shown: 0, seen: {},
+    oa: { page: 0, total: 0, fetched: 0, done: false },
+    ep: { cursor: "*", total: 0, fetched: 0, done: false }
+  };
   var currentColId = FAV;
   var currentView = "search";
   var creating = false;
@@ -584,7 +690,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
         count: list.length
       },
       insts: cleanInsts(insts),
-      abstract: rebuildAbstract(work.abstract_inverted_index)
+      abstract: rebuildAbstract(work.abstract_inverted_index),
+      via: "openalex"
     };
   }
 
@@ -610,21 +717,134 @@ footer { color: var(--muted); font-size: 0.8rem; }
       cited: Number(rec.cited) || 0,
       authors: { first: cleanPerson(a.first), last: cleanPerson(a.last), count: Number(a.count) || 0 },
       insts: cleanInsts(rec.insts),
-      abstract: String(rec.abstract || "")
+      affil: {
+        first: String((rec.affil && rec.affil.first) || "").slice(0, 200),
+        last: String((rec.affil && rec.affil.last) || "").slice(0, 200)
+      },
+      abstract: String(rec.abstract || ""),
+      via: /^(openalex|epmc|both)$/.test(rec.via) ? rec.via : ""
     };
+  }
+
+  // ---------- Suchbegriff finden und hervorheben ----------
+
+  // Suchbegriff in Einzelbegriffe zerlegen; Phrasen in Anfuehrungszeichen bleiben zusammen
+  function parseTerms(q) {
+    var terms = [], re = /"([^"]+)"|(\S+)/g, m;
+    while ((m = re.exec(q || ""))) {
+      var t = (m[1] || m[2] || "").trim();
+      if (t.length >= 2 && !/^(AND|OR|NOT)$/.test(t)) terms.push(t);
+    }
+    return terms;
+  }
+
+  function termRegex(terms) {
+    if (!terms.length) return null;
+    var parts = terms.slice().sort(function (a, b) { return b.length - a.length; }).map(function (t) {
+      return t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    });
+    try {
+      return new RegExp("(?<![\\p{L}\\p{N}])(?:" + parts.join("|") + ")(?![\\p{L}\\p{N}])", "giu");
+    } catch (e) {
+      return new RegExp("(?:" + parts.join("|") + ")", "gi");
+    }
+  }
+
+  function countHits(text, re) {
+    if (!re || !text) return 0;
+    var m = text.match(re);
+    return m ? m.length : 0;
+  }
+
+  function appendMarked(parent, text, re) {
+    if (!re) { parent.appendChild(document.createTextNode(text)); return; }
+    var last = 0, m;
+    re.lastIndex = 0;
+    while ((m = re.exec(text))) {
+      if (m[0].length === 0) { re.lastIndex++; continue; }
+      if (m.index > last) parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+      parent.appendChild(el("mark", null, m[0]));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+  }
+
+  // kurzer Ausschnitt aus dem Abstract rund um den ersten Treffer
+  function snippetAround(text, re) {
+    re.lastIndex = 0;
+    var m = re.exec(text);
+    if (!m) return "";
+    var end0 = m.index + m[0].length;
+    var s = Math.max(0, m.index - 110), e = Math.min(text.length, end0 + 110);
+    if (s > 0) { var sp = text.indexOf(" ", s); if (sp !== -1 && sp < m.index) s = sp + 1; }
+    if (e < text.length) { var sp2 = text.lastIndexOf(" ", e); if (sp2 > end0) e = sp2; }
+    return (s > 0 ? "… " : "") + text.slice(s, e) + (e < text.length ? " …" : "");
   }
 
   // Abfragen zwischenspeichern, damit ein zweiter Klick nicht erneut laedt
   var cache = {};
   function getJSON(url) {
-    if (cache[url]) return cache[url];
-    var p = fetch(url).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
+    var full = withKey(url);
+    if (cache[full]) return cache[full];
+    var p = fetch(full).then(function (r) {
+      return r.ok ? r.json() : httpError(r);
     });
-    cache[url] = p;
-    p.catch(function () { delete cache[url]; });
+    cache[full] = p;
+    p.catch(function () { delete cache[full]; });
     return p;
+  }
+
+  // ---------- OpenAlex-Schluessel und Fehlermeldungen ----------
+
+  var KEY_STORE = "journalbing.apikey";
+  function loadKey() {
+    try { return (localStorage.getItem(KEY_STORE) || "").trim(); } catch (e) { return ""; }
+  }
+  var apiKey = loadKey();
+  var keyEditing = false;
+
+  function saveKey(k) {
+    apiKey = (k || "").trim();
+    try {
+      if (apiKey) localStorage.setItem(KEY_STORE, apiKey); else localStorage.removeItem(KEY_STORE);
+    } catch (e) { /* Schluessel gilt dann nur bis zum Neuladen */ }
+    cache = {};
+  }
+
+  function withKey(url) {
+    return apiKey ? url + (url.indexOf("?") === -1 ? "?" : "&") + "api_key=" + encodeURIComponent(apiKey) : url;
+  }
+
+  function httpError(r) {
+    return r.json().catch(function () { return {}; }).then(function (b) {
+      var e = new Error("HTTP " + r.status);
+      e.status = r.status;
+      e.reason = (b && (typeof b.reason === "string" ? b.reason : (typeof b.error === "string" ? b.error : ""))) || "";
+      throw e;
+    });
+  }
+
+  function describeError(err) {
+    if (err && err.src === "epmc") {
+      return err.status
+        ? "Europe PMC meldet einen Fehler (HTTP " + err.status + ")."
+        : "Keine Verbindung zu Europe PMC. Prüfe deine Internetverbindung.";
+    }
+    var s = err && err.status, r = (err && err.reason) || "";
+    var detail = r ? " (Grund: " + r + ")" : "";
+    if (s === 409 || (s === 429 && /budget/i.test(r))) {
+      return apiKey
+        ? "Das Tagesbudget deines OpenAlex-Schlüssels ist aufgebraucht. Es setzt sich um 1:00 Uhr deutscher Zeit zurück." + detail
+        : "Das Tagesbudget von OpenAlex ist ohne Schlüssel sehr klein und aufgebraucht. Trage links unter „OpenAlex“ einen kostenlosen Schlüssel ein." + detail;
+    }
+    if (s === 429) return "OpenAlex bremst gerade, weil zu schnell zu viele Anfragen kamen. Warte einen Moment und versuch es erneut." + detail;
+    if (s === 401 || s === 403) {
+      return apiKey
+        ? "OpenAlex hat den Schlüssel abgelehnt. Prüfe ihn und ob deine E-Mail-Adresse bei OpenAlex bestätigt ist." + detail
+        : "OpenAlex verlangt einen Schlüssel. Trage links unter „OpenAlex“ einen kostenlosen ein." + detail;
+    }
+    if (s) return "OpenAlex meldet einen Fehler (HTTP " + s + ")." + detail;
+    return "Keine Verbindung zu OpenAlex. Prüfe deine Internetverbindung.";
   }
 
   // ---------- Speicher (Favoriten und Sammlungen) ----------
@@ -783,6 +1003,50 @@ footer { color: var(--muted); font-size: 0.8rem; }
     sideNav.appendChild(navItem("Sammlungen exportieren", null, false, exportData, "quiet"));
     sideNav.appendChild(navItem("Sammlungen importieren", null, false, function () { $("importFile").click(); }, "quiet"));
     sideNav.appendChild(el("div", "sidehint", "Gespeichert wird nur in diesem Browser. Mit Export und Import ziehst du auf ein anderes Gerät um."));
+
+    sideNav.appendChild(el("div", "sidelabel", "OpenAlex"));
+    if (keyEditing) {
+      var krow = el("div", "newrow");
+      var kin = document.createElement("input");
+      kin.type = "password";
+      kin.placeholder = "API-Schlüssel";
+      kin.autocomplete = "off";
+      kin.setAttribute("aria-label", "OpenAlex-API-Schlüssel");
+      var kok = el("button", "toggle", "OK");
+      kok.type = "button";
+      var ksubmit = function () {
+        if (kin.value.trim()) saveKey(kin.value);
+        keyEditing = false;
+        renderSidebar();
+        libStatus.textContent = apiKey ? "Schlüssel gespeichert. Starte die Suche erneut." : "";
+      };
+      kin.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); ksubmit(); }
+        if (e.key === "Escape") { keyEditing = false; renderSidebar(); }
+      });
+      kok.addEventListener("click", ksubmit);
+      krow.appendChild(kin);
+      krow.appendChild(kok);
+      sideNav.appendChild(krow);
+      setTimeout(function () { kin.focus(); }, 0);
+    } else {
+      sideNav.appendChild(navItem(apiKey ? "Schlüssel ändern ✓" : "Schlüssel eintragen", null, false, function () {
+        keyEditing = true;
+        renderSidebar();
+      }, "quiet"));
+      if (apiKey) {
+        sideNav.appendChild(navItem("Schlüssel entfernen", null, false, function () {
+          saveKey("");
+          renderSidebar();
+          libStatus.textContent = "Schlüssel entfernt.";
+        }, "quiet"));
+      }
+    }
+    var khint = el("div", "sidehint");
+    khint.appendChild(document.createTextNode("OpenAlex verlangt einen kostenlosen Schlüssel, sonst ist die Suche schnell gesperrt. Du bekommst ihn nach der Anmeldung unter "));
+    khint.appendChild(externalLink("openalex.org/settings/api", "https://openalex.org/settings/api"));
+    khint.appendChild(document.createTextNode(". Er bleibt nur in diesem Browser gespeichert. Gib ihn nie weiter und lege ihn nicht auf GitHub ab."));
+    sideNav.appendChild(khint);
   }
 
   function showView(name) {
@@ -882,7 +1146,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
       }).catch(function (err) {
         if (my !== token) return;
         mini.innerHTML = "";
-        mini.appendChild(el("li", "m", "Die Paper konnten nicht geladen werden (" + err.message + ")."));
+        mini.appendChild(el("li", "m", "Die Paper konnten nicht geladen werden. " + describeError(err)));
       });
     }
     modes.forEach(function (m, idx) {
@@ -934,7 +1198,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
         note.textContent = "Die Liste zeigt Paper, bei denen mindestens ein Autor zu diesem Institut gehört.";
       }
     }).catch(function (err) {
-      info.textContent = "Das Profil konnte nicht geladen werden (" + err.message + ").";
+      info.textContent = "Das Profil konnte nicht geladen werden. " + describeError(err);
     });
 
     loadWorks(0);
@@ -947,9 +1211,17 @@ footer { color: var(--muted); font-size: 0.8rem; }
     var li = el("li", "card");
     var landing = safeUrl(rec.landing);
 
+    // Nur in der Suche werden Treffer markiert; in Sammlungen bleibt der Text neutral
+    var hl = ctx === "search" ? termRegex(parseTerms(state.query)) : null;
+
     var h = el("h2");
-    if (landing) h.appendChild(externalLink(rec.title, landing));
-    else h.textContent = rec.title;
+    if (landing) {
+      var ta = externalLink("", landing);
+      appendMarked(ta, rec.title, hl);
+      h.appendChild(ta);
+    } else {
+      appendMarked(h, rec.title, hl);
+    }
     li.appendChild(h);
 
     // Klickbare Autoren und Institute teilen sich ein Detailfeld
@@ -1013,6 +1285,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
         instRow.appendChild(b);
       });
       li.appendChild(instRow);
+    } else if (rec.affil && (rec.affil.first || rec.affil.last)) {
+      // Europe PMC liefert Institute nur als Text, nicht als anklickbares Profil
+      var af = el("div", "affil");
+      if (rec.affil.first) af.appendChild(el("div", null, "Institut (Erstautor): " + rec.affil.first));
+      if (rec.affil.last && rec.affil.last !== rec.affil.first) af.appendChild(el("div", null, "Institut (Letztautor): " + rec.affil.last));
+      li.appendChild(af);
     }
     li.appendChild(detail);
 
@@ -1033,7 +1311,26 @@ footer { color: var(--muted); font-size: 0.8rem; }
     var cpy = citationsPerYear(rec);
     if (cpy !== null) cit.appendChild(document.createTextNode(" (" + cpy.toFixed(1).replace(".", ",") + " pro Jahr)"));
     meta.appendChild(cit);
+    if (rec.via) meta.appendChild(el("span", "via", rec.via === "both" ? "via OpenAlex + Europe PMC" : rec.via === "epmc" ? "via Europe PMC" : "via OpenAlex"));
     li.appendChild(meta);
+
+    // Wo wurde der Suchbegriff gefunden?
+    if (hl) {
+      var tHits = countHits(rec.title, hl), aHits = countHits(rec.abstract, hl);
+      var hits = el("div", "hits");
+      hits.appendChild(el("span", "hitlabel", "Gefunden in"));
+      if (tHits) hits.appendChild(el("span", "hit", "Titel" + (tHits > 1 ? " ×" + tHits : "")));
+      if (aHits) hits.appendChild(el("span", "hit", "Abstract ×" + aHits));
+      if (!tHits && !aHits) {
+        hits.appendChild(el("span", "hit weak", rec.abstract ? "nur im Volltext (z. B. Methoden)" : "kein Abstract verfügbar, Fundstelle unklar"));
+      }
+      li.appendChild(hits);
+      if (aHits) {
+        var snip = el("div", "snippet");
+        appendMarked(snip, snippetAround(rec.abstract, hl), hl);
+        li.appendChild(snip);
+      }
+    }
 
     var actions = el("div", "actions");
 
@@ -1064,7 +1361,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
     var abs = el("div", "abstract");
     abs.hidden = true;
-    if (rec.abstract) abs.textContent = rec.abstract;
+    if (rec.abstract) appendMarked(abs, rec.abstract, hl);
     else {
       abs.className = "abstract none";
       abs.textContent = "Für dieses Paper ist in OpenAlex kein Abstract hinterlegt. Der Link zur Originalseite zeigt ihn meist trotzdem.";
@@ -1152,12 +1449,30 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   // ---------- Suche ----------
 
+  var EPMC_API = "https://www.ebi.ac.uk/europepmc/webservices/rest/search";
+
+  function ymd(d) { return d.toISOString().slice(0, 10); }
+
+  // gemeinsamer Zeitraum aus den Filtern ("" = offen)
+  function dateRange() {
+    if (periodEl.value === "custom") return { from: fromEl.value || "", to: toEl.value || "" };
+    var years = parseInt(periodEl.value, 10);
+    return years > 0 ? { from: dateYearsBack(years), to: "" } : { from: "", to: "" };
+  }
+
+  // --- OpenAlex ---
+
   function buildUrl(page) {
     var filters = [];
     filters.push("type:" + (preEl.checked ? "article|review|preprint" : "article|review"));
+    // Der Suchbegriff muss im Titel (und Abstract) vorkommen, nicht nur irgendwo im Volltext
+    var ft = encodeURIComponent(state.query.replace(/[,|]/g, " ").trim());
+    if (scopeEl.value === "ta") filters.push("title_and_abstract.search:" + ft);
+    else if (scopeEl.value === "title") filters.push("title.search:" + ft);
     if (oaEl.checked) filters.push("is_oa:true");
-    var years = parseInt(periodEl.value, 10);
-    if (years > 0) filters.push("from_publication_date:" + dateYearsBack(years));
+    var r = dateRange();
+    if (r.from) filters.push("from_publication_date:" + r.from);
+    if (r.to) filters.push("to_publication_date:" + r.to);
     return API + "works?" + [
       "search=" + encodeURIComponent(state.query),
       "filter=" + filters.join(","),
@@ -1168,7 +1483,185 @@ footer { color: var(--muted); font-size: 0.8rem; }
     ].join("&");
   }
 
-  function setStatus(msg) { statusEl.textContent = msg; }
+  function fetchOpenAlex(page) {
+    return fetch(withKey(buildUrl(page)))
+      .then(function (r) { return r.ok ? r.json() : httpError(r); })
+      .then(function (data) {
+        return { recs: (data.results || []).map(normalize), total: (data.meta && data.meta.count) || 0 };
+      })
+      .catch(function (e) { e.src = "openalex"; throw e; });
+  }
+
+  // --- Europe PMC ---
+
+  function stripTags(s) {
+    if (!s) return "";
+    try {
+      var spaced = String(s).replace(/<\/(h[1-6]|p|div|li|title|sec)>|<br\s*\/?>/gi, "$& ");
+      return (new DOMParser().parseFromString(spaced, "text/html").body.textContent || "").replace(/\s+/g, " ").trim();
+    } catch (e) {
+      return String(s).replace(/<[^>]+>/g, "").trim();
+    }
+  }
+
+  function epmcQuery() {
+    var terms = parseTerms(state.query).map(function (t) { return t.replace(/"/g, ""); }).filter(Boolean);
+    var scope = scopeEl.value;
+    var expr = terms.map(function (t) {
+      if (scope === "title") return 'TITLE:"' + t + '"';
+      if (scope === "ta") return '(TITLE:"' + t + '" OR ABSTRACT:"' + t + '")';
+      return '"' + t + '"';
+    }).join(" AND ");
+    var parts = [expr || '"' + state.query.replace(/"/g, "") + '"'];
+    parts.push(preEl.checked ? "(SRC:MED OR SRC:PMC OR SRC:PPR)" : "(SRC:MED OR SRC:PMC)");
+    if (oaEl.checked) parts.push("OPEN_ACCESS:y");
+    var r = dateRange();
+    if (r.from || r.to) parts.push("FIRST_PDATE:[" + (r.from || "1900-01-01") + " TO " + (r.to || ymd(new Date())) + "]");
+    return parts.join(" AND ");
+  }
+
+  function epmcUrl(cursor) {
+    var q = [
+      "query=" + encodeURIComponent(epmcQuery()),
+      "format=json",
+      "resultType=core",
+      "pageSize=" + PER_PAGE,
+      "synonym=false",
+      "cursorMark=" + encodeURIComponent(cursor)
+    ];
+    if (sortEl.value === "publication_date:desc") q.push("sort=" + encodeURIComponent("P_PDATE_D desc"));
+    else if (sortEl.value === "cited_by_count:desc") q.push("sort=" + encodeURIComponent("CITED desc"));
+    return EPMC_API + "?" + q.join("&");
+  }
+
+  function normalizeEpmc(r) {
+    var list = (r.authorList && r.authorList.author) || [];
+    var nm = function (a) { return a && (a.fullName || ((a.firstName || "") + " " + (a.lastName || "")).trim()); };
+    var aff = function (a) {
+      if (!a) return "";
+      var d = a.authorAffiliationDetailsList && a.authorAffiliationDetailsList.authorAffiliation;
+      if (d && d[0] && d[0].affiliation) return String(d[0].affiliation);
+      return typeof a.affiliation === "string" ? a.affiliation : "";
+    };
+    var names = list.map(nm).filter(Boolean);
+    if (!names.length && r.authorString) names = String(r.authorString).replace(/\.$/, "").split(/,\s*/).filter(Boolean);
+    var firstAff = aff(list[0]) || (typeof r.affiliation === "string" ? r.affiliation : "");
+    var lastAff = list.length > 1 ? aff(list[list.length - 1]) : "";
+    var cut = function (s) { s = String(s || "").trim(); return s.length > 170 ? s.slice(0, 167) + "…" : s; };
+
+    var urls = (r.fullTextUrlList && r.fullTextUrlList.fullTextUrl) || [];
+    var pdf = urls.filter(function (u) {
+      return u && u.documentStyle === "pdf" && (u.availabilityCode === "OA" || u.availabilityCode === "F");
+    })[0];
+    var journal = (r.journalInfo && r.journalInfo.journal && r.journalInfo.journal.title) || r.journalTitle || "";
+    var preprint = r.source === "PPR";
+
+    return {
+      id: "epmc:" + r.source + ":" + r.id,
+      title: stripTags(r.title) || "(ohne Titel)",
+      doi: r.doi ? "https://doi.org/" + r.doi : null,
+      landing: "https://europepmc.org/article/" + encodeURIComponent(r.source) + "/" + encodeURIComponent(r.id),
+      pdf: pdf && pdf.url ? pdf.url : null,
+      source: {
+        name: journal,
+        publisher: (r.bookOrReportDetails && r.bookOrReportDetails.publisher) || "",
+        type: preprint ? "repository" : "journal",
+        domain: "europepmc.org"
+      },
+      date: r.firstPublicationDate || (r.pubYear ? String(r.pubYear) : ""),
+      type: preprint ? "preprint" : "article",
+      isOa: r.isOpenAccess === "Y",
+      cited: Number(r.citedByCount) || 0,
+      authors: {
+        first: names.length ? { name: names[0], id: null } : null,
+        last: names.length > 1 ? { name: names[names.length - 1], id: null } : null,
+        count: names.length
+      },
+      insts: [],
+      affil: { first: cut(firstAff), last: cut(lastAff) },
+      abstract: stripTags(r.abstractText),
+      via: "epmc"
+    };
+  }
+
+  function fetchEpmc(cursor) {
+    return fetch(epmcUrl(cursor))
+      .then(function (r) { return r.ok ? r.json() : httpError(r); })
+      .then(function (data) {
+        var res = (data.resultList && data.resultList.result) || [];
+        return {
+          recs: res.filter(function (x) { return x && x.id && x.source; }).map(normalizeEpmc),
+          total: Number(data.hitCount) || 0,
+          next: data.nextCursorMark || ""
+        };
+      })
+      .catch(function (e) { e.src = "epmc"; throw e; });
+  }
+
+  // --- Zusammenfuehren ---
+
+  function dedupeKey(rec) {
+    var d = rec.doi ? String(rec.doi).toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//, "") : "";
+    return d ? "doi:" + d : "id:" + rec.id;
+  }
+
+  // a = OpenAlex-Eintrag (bleibt die Basis), b = Europe-PMC-Eintrag derselben Arbeit
+  function mergeRecs(a, b) {
+    if (!a.abstract && b.abstract) a.abstract = b.abstract;
+    if (!a.pdf && b.pdf) a.pdf = b.pdf;
+    if (a.source && !a.source.name && b.source && b.source.name) a.source = b.source;
+    if (!a.isOa && b.isOa) a.isOa = true;
+    if (!(a.insts && a.insts.length)) a.affil = b.affil;
+    a.via = "both";
+    return a;
+  }
+
+  function combineBatch(oaRecs, epRecs) {
+    var map = {}, rank = {}, out = [];
+    oaRecs.forEach(function (r, i) {
+      var k = dedupeKey(r);
+      if (map[k]) return;
+      map[k] = r; rank[k] = i; out.push({ k: k, r: r });
+    });
+    epRecs.forEach(function (r, i) {
+      var k = dedupeKey(r);
+      if (map[k]) {
+        if (map[k].via === "openalex") mergeRecs(map[k], r);
+        rank[k] = Math.min(rank[k], i);
+      } else {
+        map[k] = r; rank[k] = i; out.push({ k: k, r: r });
+      }
+    });
+    // bereits angezeigte Arbeiten (aus fruehen Seiten) nicht nochmal zeigen
+    out = out.filter(function (o) { return !state.seen[o.k]; });
+    out.forEach(function (o) { state.seen[o.k] = true; });
+    if (oaRecs.length && epRecs.length) {
+      var mode = sortEl.value;
+      if (mode === "publication_date:desc") out.sort(function (a, b) { return String(b.r.date).localeCompare(String(a.r.date)); });
+      else if (mode === "cited_by_count:desc") out.sort(function (a, b) { return b.r.cited - a.r.cited; });
+      else out.sort(function (a, b) { return rank[a.k] - rank[b.k]; });
+    }
+    return out.map(function (o) { return o.r; });
+  }
+
+  // --- Anzeige und Ablauf ---
+
+  function setStatus(msg) {
+    statusEl.classList.remove("loading");
+    statusEl.textContent = msg;
+  }
+
+  // "Suche läuft" mit drei springenden Punkten; bei neuer Suche werden alte Ergebnisse abgedunkelt
+  function showLoading(append) {
+    statusEl.classList.add("loading");
+    statusEl.textContent = "";
+    statusEl.appendChild(document.createTextNode(append ? "Lade weitere Treffer" : "Suche läuft"));
+    var dots = el("span", "dots");
+    dots.setAttribute("aria-hidden", "true");
+    for (var i = 0; i < 3; i++) dots.appendChild(el("i"));
+    statusEl.appendChild(dots);
+    if (!append) resultsEl.classList.add("busy");
+  }
 
   function showError(msg) {
     resultsEl.innerHTML = "";
@@ -1177,45 +1670,97 @@ footer { color: var(--muted); font-size: 0.8rem; }
     resultsEl.appendChild(li);
   }
 
-  function load(page, append) {
+  function newSearchState() {
+    state.oa = { page: 0, total: 0, fetched: 0, done: false };
+    state.ep = { cursor: "*", total: 0, fetched: 0, done: false };
+    state.seen = {};
+    state.shown = 0;
+  }
+
+  function settle(p) {
+    return p.then(function (v) { return { ok: true, v: v }; }, function (e) { return { ok: false, e: e }; });
+  }
+
+  function load(append) {
     if (state.loading) return;
     state.loading = true;
     moreEl.disabled = true;
-    setStatus("Suche läuft …");
+    showLoading(append);
 
-    fetch(buildUrl(page))
-      .then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then(function (data) {
-        var works = data.results || [];
-        if (!append) { resultsEl.innerHTML = ""; state.shown = 0; }
-        state.total = (data.meta && data.meta.count) || 0;
-        works.forEach(function (w) { resultsEl.appendChild(renderCard(normalize(w), "search")); });
-        state.shown += works.length;
-        state.page = page;
+    var useOa = state.source !== "epmc", useEp = state.source !== "openalex";
+    var jobs = [
+      useOa && !state.oa.done ? settle(fetchOpenAlex(state.oa.page + 1)) : Promise.resolve(null),
+      useEp && !state.ep.done ? settle(fetchEpmc(state.ep.cursor)) : Promise.resolve(null)
+    ];
 
-        if (!state.total) setStatus("Keine Treffer. Versuch einen allgemeineren Begriff oder lockere die Filter.");
-        else setStatus(state.shown + " von " + state.total.toLocaleString("de-DE") + " Treffern angezeigt");
-        moreEl.hidden = state.shown >= state.total || works.length === 0;
-      })
-      .catch(function (err) {
-        if (!append) showError("Die Suche hat nicht geklappt (" + err.message + "). Prüfe deine Internetverbindung und versuch es noch einmal.");
-        else setStatus("Weitere Treffer konnten nicht geladen werden. Versuch es noch einmal.");
-      })
-      .then(function () {
-        state.loading = false;
-        moreEl.disabled = false;
-      });
+    Promise.all(jobs).then(function (res) {
+      var oa = res[0], ep = res[1], errors = [], failed = {};
+      var oaRecs = [], epRecs = [];
+
+      if (oa && oa.ok) {
+        oaRecs = oa.v.recs;
+        state.oa.page += 1;
+        state.oa.total = oa.v.total;
+        state.oa.fetched += oaRecs.length;
+        state.oa.done = !oaRecs.length || state.oa.fetched >= state.oa.total;
+      } else if (oa) { errors.push(oa.e); failed.oa = true; }
+
+      if (ep && ep.ok) {
+        epRecs = ep.v.recs;
+        state.ep.total = ep.v.total;
+        state.ep.fetched += epRecs.length;
+        state.ep.done = !epRecs.length || !ep.v.next || ep.v.next === state.ep.cursor || state.ep.fetched >= state.ep.total;
+        state.ep.cursor = ep.v.next || state.ep.cursor;
+      } else if (ep) { errors.push(ep.e); failed.ep = true; }
+
+      var bothFailed = errors.length > 0 && !oaRecs.length && !epRecs.length && ((useOa && failed.oa) || !useOa) && ((useEp && failed.ep) || !useEp);
+      if (bothFailed) {
+        var msg = errors.map(function (e) { return describeError(e); }).join(" ");
+        if (!append) showError("Die Suche hat nicht geklappt. " + msg);
+        else setStatus("Weitere Treffer konnten nicht geladen werden. " + msg);
+        return;
+      }
+
+      var recs = combineBatch(oaRecs, epRecs);
+      if (!append) resultsEl.innerHTML = "";
+      recs.forEach(function (rec) { resultsEl.appendChild(renderCard(rec, "search")); });
+      state.shown += recs.length;
+
+      var msg2;
+      if (useOa && useEp) {
+        msg2 = state.shown + " Treffer angezeigt (OpenAlex " + (failed.oa ? "–" : state.oa.total.toLocaleString("de-DE")) + ", Europe PMC " + (failed.ep ? "–" : state.ep.total.toLocaleString("de-DE")) + " insgesamt; Doppelte werden zusammengefasst)";
+      } else {
+        var total = useOa ? state.oa.total : state.ep.total;
+        msg2 = state.shown + " von " + total.toLocaleString("de-DE") + " Treffern angezeigt";
+      }
+      if (!state.shown) msg2 = "Keine Treffer. Versuch einen allgemeineren Begriff, „Suchen in: Volltext“ oder lockere die Filter.";
+      if (errors.length) msg2 += ". Hinweis: " + errors.map(function (e) { return describeError(e); }).join(" ");
+      setStatus(msg2);
+
+      var more = (useOa && !state.oa.done && !failed.oa) || (useEp && !state.ep.done && !failed.ep);
+      moreEl.hidden = !more;
+    }).then(function () {
+      state.loading = false;
+      moreEl.disabled = false;
+      resultsEl.classList.remove("busy");
+      // wurden die Filter waehrend der Suche geaendert, jetzt mit den neuen Werten suchen
+      if (state.pending) { state.pending = false; startSearch(); }
+    });
   }
 
   function startSearch() {
     var q = qEl.value.trim();
     if (!q) { setStatus("Gib zuerst ein Thema ein."); return; }
+    if (periodEl.value === "custom" && fromEl.value && toEl.value && fromEl.value > toEl.value) {
+      setStatus("Das Startdatum liegt nach dem Enddatum. Bitte korrigiere den Zeitraum.");
+      return;
+    }
+    if (state.loading) { state.pending = true; return; }
     state.query = q;
+    state.source = sourceEl.value;
+    newSearchState();
     moreEl.hidden = true;
-    load(1, false);
+    load(false);
   }
 
   // ---------- Sammlungen-Ansicht ----------
@@ -1365,9 +1910,21 @@ footer { color: var(--muted); font-size: 0.8rem; }
   // ---------- Ereignisse ----------
 
   form.addEventListener("submit", function (e) { e.preventDefault(); startSearch(); });
-  moreEl.addEventListener("click", function () { load(state.page + 1, true); });
-  [oaEl, preEl, periodEl, sortEl].forEach(function (c) {
+  moreEl.addEventListener("click", function () { load(true); });
+  [oaEl, preEl, sortEl, scopeEl, sourceEl, fromEl, toEl].forEach(function (c) {
     c.addEventListener("change", function () { if (state.query) startSearch(); });
+  });
+  periodEl.addEventListener("change", function () {
+    var custom = periodEl.value === "custom";
+    rangeEl.hidden = !custom;
+    if (custom && !fromEl.value && !toEl.value) {
+      var today = new Date().toISOString().slice(0, 10);
+      toEl.value = today;
+      fromEl.value = dateYearsBack(1);
+      toEl.max = today;
+      fromEl.max = today;
+    }
+    if (state.query) startSearch();
   });
 
   menuBtn.addEventListener("click", function () {
