@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>JournalBing</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<script>
+(function () {
+  try {
+    var p = JSON.parse(localStorage.getItem("journalbing.look") || "{}"), r = document.documentElement;
+    if (p.mode === "light" || p.mode === "dark") r.setAttribute("data-theme", p.mode);
+    if (/^(deep|mint|violet)$/.test(p.palette)) r.setAttribute("data-palette", p.palette);
+    if (p.style === "bold") r.setAttribute("data-style", "bold");
+  } catch (e) { /* Standard-Darstellung */ }
+})();
+</script>
 <style>
 /* Layout: schmale Seitenleiste links mit allen Funktionen (Suche, Sammlungen, Daten), rechts eine ruhige Lesespalte. Auf schmalen Bildschirmen wird die Leiste zum ausklappbaren Menü. */
 :root {
@@ -23,6 +33,11 @@
   --oa-bg: #e0f3e8;
   --closed: #5a6b73;
   --closed-bg: #e8edef;
+  --grey: #aab8be;
+  --gold: #e8b630;
+  --deep1: #0d5a73;
+  --deep2: #0a3d52;
+  --deep3: #082c3c;
   --warn: #9a3412;
   --warn-bg: #fdeadd;
   --red: #c62828;
@@ -48,6 +63,11 @@
     --oa-bg: #17382a;
     --closed: #93a6ae;
     --closed-bg: #22343c;
+    --grey: #51656d;
+    --gold: #e0b84a;
+    --deep1: #0d5a73;
+    --deep2: #0a3d52;
+    --deep3: #082c3c;
     --warn: #f4a972;
     --warn-bg: #3a2616;
     --red: #ff8a80;
@@ -72,6 +92,11 @@
   --oa-bg: #17382a;
   --closed: #93a6ae;
   --closed-bg: #22343c;
+  --grey: #51656d;
+  --gold: #e0b84a;
+  --deep1: #0d5a73;
+  --deep2: #0a3d52;
+  --deep3: #082c3c;
   --warn: #f4a972;
   --warn-bg: #3a2616;
   --red: #ff8a80;
@@ -79,6 +104,19 @@
   --scrim: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
+
+/* ---------- Farbwelten ---------- */
+:root[data-palette="deep"] { --accent: #1f55c4; --accent-fg: #ffffff; --accent-soft: #dfe8fb; --tint: #e8eefb; --tint-line: #c3d2f2; --deep1: #1b45a0; --deep2: #12306f; --deep3: #0c2150; }
+:root[data-palette="mint"] { --accent: #0f7a5a; --accent-fg: #ffffff; --accent-soft: #d9f0e7; --tint: #e6f4ee; --tint-line: #b8dccc; --deep1: #0f6b52; --deep2: #0a4a3a; --deep3: #06322a; }
+:root[data-palette="violet"] { --accent: #6d3fc0; --accent-fg: #ffffff; --accent-soft: #e8e0f7; --tint: #efeaf8; --tint-line: #d0c3ec; --deep1: #5a30a6; --deep2: #3f2275; --deep3: #2b1752; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-palette="deep"] { --accent: #8fb0ff; --accent-fg: #0a1633; --accent-soft: #1d2c52; --tint: #1a2744; --tint-line: #2f4474; --deep1: #1b45a0; --deep2: #12306f; --deep3: #0c2150; }
+  :root:not([data-theme="light"])[data-palette="mint"] { --accent: #5fd3a8; --accent-fg: #062a1d; --accent-soft: #16392d; --tint: #162d25; --tint-line: #2a4d40; --deep1: #0f6b52; --deep2: #0a4a3a; --deep3: #06322a; }
+  :root:not([data-theme="light"])[data-palette="violet"] { --accent: #b79bff; --accent-fg: #1a0b3a; --accent-soft: #2b2150; --tint: #241d42; --tint-line: #3d3366; --deep1: #5a30a6; --deep2: #3f2275; --deep3: #2b1752; }
+}
+:root[data-theme="dark"][data-palette="deep"] { --accent: #8fb0ff; --accent-fg: #0a1633; --accent-soft: #1d2c52; --tint: #1a2744; --tint-line: #2f4474; --deep1: #1b45a0; --deep2: #12306f; --deep3: #0c2150; }
+:root[data-theme="dark"][data-palette="mint"] { --accent: #5fd3a8; --accent-fg: #062a1d; --accent-soft: #16392d; --tint: #162d25; --tint-line: #2a4d40; --deep1: #0f6b52; --deep2: #0a4a3a; --deep3: #06322a; }
+:root[data-theme="dark"][data-palette="violet"] { --accent: #b79bff; --accent-fg: #1a0b3a; --accent-soft: #2b2150; --tint: #241d42; --tint-line: #3d3366; --deep1: #5a30a6; --deep2: #3f2275; --deep3: #2b1752; }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -396,6 +434,52 @@ mark { background: var(--hl); color: inherit; border-radius: 3px; padding: 0 2px
 .howto b { color: var(--fg); }
 .setgroup .row + .row { margin-top: 8px; }
 button[disabled] { opacity: 0.5; cursor: default; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { flex: none; }
+.logo .hex { fill: var(--accent); }
+.logo .bm { fill: var(--surface); }
+.card { padding-left: 20px; position: relative; }
+.card::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px; border-radius: 0 4px 4px 0; background: var(--st, var(--grey)); }
+.card.st-read { --st: var(--accent); }
+.card.st-important { --st: var(--gold); }
+.meta .journal.jb { display: inline-flex; align-items: center; gap: 7px; }
+.jmark { font-style: normal; display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 5px; border-radius: 7px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--tint-line); }
+.cbar { display: inline-block; width: 56px; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; vertical-align: middle; }
+.cbar span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.skel { height: 118px; border-radius: 12px; border: 1px solid var(--line); background: linear-gradient(100deg, var(--surface) 30%, var(--accent-soft) 50%, var(--surface) 70%); background-size: 300% 100%; }
+.markicon.pop { animation: pop 0.35s; }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.35) rotate(-6deg); } 100% { transform: scale(1); } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .card.rise { animation: rise 0.4s both; }
+  .skel { animation: shimmer 1.2s linear infinite; }
+}
+.lookrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.lookrow .lbl { width: 64px; color: var(--muted); font-size: 0.85rem; }
+.lookrow .seg button { padding: 7px 14px; font-size: 0.9rem; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; background: var(--sw); }
+
+/* Stil "Mutig" */
+:root[data-style="bold"] .sidebar { background: linear-gradient(170deg, var(--deep1) 0%, var(--deep2) 60%, var(--deep3) 100%); border-right: 0; color: #e6f3f7; }
+:root[data-style="bold"] .sidebar .brand { color: #fff; }
+:root[data-style="bold"] .sidebar .logo .hex { fill: #8fe3f5; }
+:root[data-style="bold"] .sidebar .logo .bm { fill: var(--deep2); }
+:root[data-style="bold"] .sidebar .navitem { color: #e6f3f7; }
+:root[data-style="bold"] .sidebar .navitem:hover { background: rgba(255, 255, 255, 0.1); }
+:root[data-style="bold"] .sidebar .navitem.active { background: rgba(255, 255, 255, 0.16); color: #fff; }
+:root[data-style="bold"] .sidebar .navitem.quiet { color: #8fe3f5; }
+:root[data-style="bold"] .sidebar .sidelabel, :root[data-style="bold"] .sidebar .navitem .n, :root[data-style="bold"] .sidebar .version, :root[data-style="bold"] .sidebar .syncnote { color: #a9cad6; }
+:root[data-style="bold"] .sidebar .syncnote.fail { color: #ffb4a8; }
+:root[data-style="bold"] .card { border-radius: 14px; box-shadow: 0 1px 2px rgba(10, 61, 82, 0.06), 0 6px 16px rgba(10, 61, 82, 0.06); }
+:root[data-style="bold"] .card::before { width: 5px; }
+:root[data-style="bold"] .actions button.toggle { background: var(--accent-soft); border-color: transparent; }
+:root[data-style="bold"] .actions button.toggle[aria-expanded="true"], :root[data-style="bold"] button.fav[aria-pressed="true"] { border-color: var(--accent); }
+:root[data-style="bold"] .cbar { height: 7px; }
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-style="bold"] .card { transition: transform 0.18s, box-shadow 0.18s, border-color 0.15s; }
+  :root[data-style="bold"] .card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(10, 61, 82, 0.16); }
+}
 .syncbtn { margin-top: 4px; }
 .syncbtn { justify-content: flex-start; }
 .navitem.syncbtn .markicon { margin-right: 8px; fill: none; }
@@ -479,12 +563,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
 <div class="app">
   <div class="topbar">
     <button type="button" class="menubtn" id="menuBtn" aria-label="Menü öffnen" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
-    <span class="brand">JournalBing</span>
+    <span class="brand"><svg class="logo" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path class="hex" d="M16 2l12 7v14l-12 7-12-7V9z"/><path class="bm" d="M12 9h8v13l-4-3-4 3z"/></svg>JournalBing</span>
   </div>
   <div class="backdrop" id="backdrop" hidden></div>
 
   <aside class="sidebar" id="sidebar" aria-label="Hauptmenü">
-    <h1 class="brand">JournalBing</h1>
+    <h1 class="brand"><svg class="logo" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path class="hex" d="M16 2l12 7v14l-12 7-12-7V9z"/><path class="bm" d="M12 9h8v13l-4-3-4 3z"/></svg>JournalBing</h1>
     <nav id="sideNav" aria-label="Funktionen"></nav>
     <div class="sidefoot">
       <button type="button" class="navitem" id="settingsBtn">
@@ -557,6 +641,13 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
       <section class="view" id="viewSettings" hidden>
         <h2>Einstellungen</h2>
+
+        <div class="setgroup">
+          <h3>Darstellung</h3>
+          <div class="lookrow"><span class="lbl">Modus</span><div class="seg" id="lookMode"></div></div>
+          <div class="lookrow"><span class="lbl">Farbe</span><div class="seg" id="lookPalette"></div></div>
+          <div class="lookrow"><span class="lbl">Stil</span><div class="seg" id="lookStyle"></div></div>
+        </div>
 
         <div class="setgroup">
           <h3>Suche</h3>
@@ -663,7 +754,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   var libStatus = $("libStatus"), sideNav = $("sideNav"), libFilterEl = $("libFilter");
   var sidebar = $("sidebar"), backdrop = $("backdrop"), menuBtn = $("menuBtn");
   var settingsBtn = $("settingsBtn"), keyInput = $("keyInput"), keySave = $("keySave"), keyClear = $("keyClear"), keyState = $("keyState");
-  var VERSION = "Version 2026.11.19-10";
+  var VERSION = "Version 2026.11.19-11";
 
   var state = {
     loading: false, query: "", source: "both", shown: 0, seen: {},
@@ -1193,7 +1284,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     viewSettings.hidden = name !== "settings";
     libStatus.textContent = "";
     if (name === "lib") renderLibrary();
-    if (name === "settings") { renderKeyState(); renderSyncState(); }
+    if (name === "settings") { renderKeyState(); renderSyncState(); renderLook(); }
     renderSidebar();
     closeDrawer();
     window.scrollTo(0, 0);
@@ -1202,6 +1293,46 @@ footer { color: var(--muted); font-size: 0.8rem; }
   // ---------- Einstellungen ----------
 
   var PREFS_KEY = "journalbing.prefs";
+
+  // ---------- Darstellung (Modus, Farbe, Stil) ----------
+
+  var LOOK_KEY = "journalbing.look";
+  var look = { mode: "system", palette: "petrol", style: "calm" };
+  try {
+    var lv = JSON.parse(localStorage.getItem(LOOK_KEY) || "{}");
+    if (/^(light|dark)$/.test(lv.mode)) look.mode = lv.mode;
+    if (/^(deep|mint|violet)$/.test(lv.palette)) look.palette = lv.palette;
+    if (lv.style === "bold") look.style = "bold";
+  } catch (e) { /* Standard */ }
+
+  function applyLook() {
+    var r = document.documentElement;
+    if (look.mode === "system") r.removeAttribute("data-theme"); else r.setAttribute("data-theme", look.mode);
+    if (look.palette === "petrol") r.removeAttribute("data-palette"); else r.setAttribute("data-palette", look.palette);
+    if (look.style === "bold") r.setAttribute("data-style", "bold"); else r.removeAttribute("data-style");
+    try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch (e) { /* nur bis zum Neuladen */ }
+  }
+
+  function renderLook() {
+    var groups = [
+      ["lookMode", "mode", [["system", "System"], ["light", "Hell"], ["dark", "Dunkel"]]],
+      ["lookPalette", "palette", [["petrol", "Petrol", "#0b6e84"], ["deep", "Tiefblau", "#1f55c4"], ["mint", "Mint", "#0f7a5a"], ["violet", "Violett", "#6d3fc0"]]],
+      ["lookStyle", "style", [["calm", "Ruhig"], ["bold", "Mutig"]]]
+    ];
+    groups.forEach(function (g) {
+      var box = $(g[0]);
+      box.innerHTML = "";
+      g[2].forEach(function (o) {
+        var b = el("button", "toggle");
+        b.type = "button";
+        if (o[2]) { var sw = el("span", "swatch"); sw.style.setProperty("--sw", o[2]); sw.setAttribute("aria-hidden", "true"); b.appendChild(sw); }
+        b.appendChild(document.createTextNode(o[1]));
+        b.setAttribute("aria-pressed", look[g[1]] === o[0] ? "true" : "false");
+        b.addEventListener("click", function () { look[g[1]] = o[0]; applyLook(); renderLook(); });
+        box.appendChild(b);
+      });
+    });
+  }
 
   function loadPrefs() {
     try {
@@ -1446,6 +1577,14 @@ footer { color: var(--muted); font-size: 0.8rem; }
   // ---------- Ergebniskarte ----------
 
   // ctx: "search" oder "library"
+  var JOURNAL_SKIP = /^(of|the|and|for|in|on|de|der|die|und|journal|j|&)$/i;
+  function monogram(name) {
+    var w = String(name || "").replace(/[()&:,.\-–]/g, " ").split(/\s+/).filter(function (x) { return x && !JOURNAL_SKIP.test(x); });
+    if (!w.length) return "";
+    if (w.length === 1) return w[0].charAt(0).toUpperCase() + w[0].charAt(1).toLowerCase();
+    return (w[0].charAt(0) + w[1].charAt(0)).toUpperCase();
+  }
+
   function renderCard(rec, ctx) {
     var li = el("li", "card");
     var landing = safeUrl(rec.landing);
@@ -1547,7 +1686,13 @@ footer { color: var(--muted); font-size: 0.8rem; }
     var src = rec.source || {};
     var journalName = src.name || rec.journal || "";
     var meta = el("div", "meta");
-    if (journalName) meta.appendChild(el("span", "journal", journalName));
+    if (journalName) {
+      var jn = el("span", "journal jb");
+      var mono = monogram(journalName);
+      if (mono) { var jm = el("i", "jmark", mono); jm.setAttribute("aria-hidden", "true"); jn.appendChild(jm); }
+      jn.appendChild(document.createTextNode(journalName));
+      meta.appendChild(jn);
+    }
     if (src.publisher && src.publisher !== journalName) meta.appendChild(el("span", null, "Verlag: " + src.publisher));
     if (src.type === "repository") meta.appendChild(el("span", null, "Repositorium"));
     if (src.domain) meta.appendChild(el("span", null, "Seite: " + src.domain));
@@ -1559,8 +1704,15 @@ footer { color: var(--muted); font-size: 0.8rem; }
     var cit = el("span");
     cit.appendChild(el("span", "num", String(rec.cited || 0)));
     cit.appendChild(document.createTextNode(" Zitationen"));
+    var cbar = el("span", "cbar");
+    cbar.setAttribute("aria-hidden", "true");
+    var cfill = el("span");
+    cfill.style.width = Math.min(100, Math.round(Math.log10((rec.cited || 0) + 1) / Math.log10(5001) * 100)) + "%";
+    cbar.appendChild(cfill);
     var cpy = citationsPerYear(rec);
     if (cpy !== null) cit.appendChild(document.createTextNode(" (" + cpy.toFixed(1).replace(".", ",") + " pro Jahr)"));
+    cit.appendChild(document.createTextNode(" "));
+    cit.appendChild(cbar);
     meta.appendChild(cit);
     if (rec.via) meta.appendChild(el("span", "via", rec.via === "both" ? "via OpenAlex + Europe PMC" : rec.via === "epmc" ? "via Europe PMC" : "via OpenAlex"));
     li.appendChild(meta);
@@ -1649,6 +1801,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
     function updateMetaUi() {
       var saved = isSaved(rec.id);
       var m = getMeta(rec.id);
+      li.classList.toggle("st-read", saved && m.status === "read");
+      li.classList.toggle("st-important", saved && m.status === "important");
       noteBtn.hidden = !saved;
       if (!saved && !notePanel.hidden) { notePanel.hidden = true; noteBtn.setAttribute("aria-expanded", "false"); }
       noteBtn.textContent = saved && m.note.trim() ? "Notiz & Status ✎" : "Notiz & Status";
@@ -1697,6 +1851,11 @@ footer { color: var(--muted); font-size: 0.8rem; }
     function updateFav() {
       updateMetaUi();
       var on = inCol(colById(FAV), rec.id);
+      if (on && favBtn.hasAttribute("aria-pressed") && favBtn.getAttribute("aria-pressed") !== "true") {
+        heart.classList.remove("pop");
+        void heart.getBoundingClientRect();
+        heart.classList.add("pop");
+      }
       favBtn.setAttribute("aria-pressed", on ? "true" : "false");
       favLabel.textContent = on ? "Favorit" : "Favorisieren";
     }
@@ -1985,7 +2144,13 @@ footer { color: var(--muted); font-size: 0.8rem; }
     dots.setAttribute("aria-hidden", "true");
     for (var i = 0; i < 3; i++) dots.appendChild(el("i"));
     statusEl.appendChild(dots);
-    if (!append) resultsEl.classList.add("busy");
+    if (!append) {
+      if (resultsEl.querySelector(".card")) resultsEl.classList.add("busy");
+      else {
+        resultsEl.innerHTML = "";
+        for (var k = 0; k < 3; k++) { var sk = document.createElement("li"); sk.className = "skel"; sk.setAttribute("aria-hidden", "true"); resultsEl.appendChild(sk); }
+      }
+    }
   }
 
   function showError(msg) {
@@ -2048,7 +2213,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
       var recs = combineBatch(oaRecs, epRecs);
       if (!append) resultsEl.innerHTML = "";
-      recs.forEach(function (rec) { resultsEl.appendChild(renderCard(rec, "search")); });
+      recs.forEach(function (rec, i) {
+        var card = renderCard(rec, "search");
+        card.classList.add("rise");
+        card.style.animationDelay = Math.min(i, 8) * 0.05 + "s";
+        resultsEl.appendChild(card);
+      });
       state.shown += recs.length;
 
       var msg2;
