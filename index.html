@@ -474,7 +474,7 @@ button[disabled] { opacity: 0.5; cursor: default; }
 :root[data-style="bold"] .card { border-radius: 14px; box-shadow: 0 1px 2px rgba(10, 61, 82, 0.06), 0 6px 16px rgba(10, 61, 82, 0.06); }
 :root[data-style="bold"] .card::before { width: 5px; }
 :root[data-style="bold"] .actions button.toggle { background: var(--accent-soft); border-color: transparent; }
-:root[data-style="bold"] .actions button.toggle[aria-expanded="true"], :root[data-style="bold"] button.fav[aria-pressed="true"] { border-color: var(--accent); }
+:root[data-style="bold"] .actions button.toggle[aria-expanded="true"] { border-color: var(--accent); }
 :root[data-style="bold"] .cbar { height: 7px; }
 @media (prefers-reduced-motion: no-preference) {
   :root[data-style="bold"] .card { transition: transform 0.18s, box-shadow 0.18s, border-color 0.15s; }
@@ -504,11 +504,12 @@ button.toggle, button.ghost {
   font-weight: 600;
 }
 .actions button.toggle[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); }
-button.fav { display: inline-flex; align-items: center; gap: 6px; }
-button.fav[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+button.favcorner { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; display: grid; place-items: center; padding: 0; background: transparent; color: var(--accent); border: 0; border-radius: 8px; cursor: pointer; }
+button.favcorner:hover { background: var(--accent-soft); }
+.card > h2 { padding-right: 40px; }
 .markicon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vertical-align: -2px; margin-right: 6px; }
-button.fav .markicon { margin-right: 0; width: 17px; height: 17px; vertical-align: 0; }
-button.fav[aria-pressed="true"] .markicon, .navitem .markicon, #libTitle .markicon { fill: currentColor; }
+button.favcorner .markicon { margin-right: 0; width: 22px; height: 22px; vertical-align: 0; }
+button.favcorner[aria-pressed="true"] .markicon, .navitem .markicon, #libTitle .markicon { fill: currentColor; }
 #libTitle .markicon { width: 20px; height: 20px; vertical-align: -1px; color: var(--accent); }
 button.danger { color: var(--warn); }
 button.danger.arm { background: var(--warn-bg); border-color: var(--warn); }
@@ -594,9 +595,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
           <div class="filters fgrid">
             <label class="field"><span>Zeitraum</span>
               <select id="period">
-                <option value="0">Alle</option>
+                <option value="0" selected>Alle</option>
                 <option value="1">Letztes Jahr</option>
-                <option value="3" selected>Letzte 3 Jahre</option>
+                <option value="3">Letzte 3 Jahre</option>
                 <option value="5">Letzte 5 Jahre</option>
                 <option value="custom">Eigener Zeitraum &hellip;</option>
               </select>
@@ -754,7 +755,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   var libStatus = $("libStatus"), sideNav = $("sideNav"), libFilterEl = $("libFilter");
   var sidebar = $("sidebar"), backdrop = $("backdrop"), menuBtn = $("menuBtn");
   var settingsBtn = $("settingsBtn"), keyInput = $("keyInput"), keySave = $("keySave"), keyClear = $("keyClear"), keyState = $("keyState");
-  var VERSION = "Version 2026.11.19-11";
+  var VERSION = "Version 2026.11.19-13";
 
   var state = {
     loading: false, query: "", source: "both", shown: 0, seen: {},
@@ -1317,7 +1318,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     var groups = [
       ["lookMode", "mode", [["system", "System"], ["light", "Hell"], ["dark", "Dunkel"]]],
       ["lookPalette", "palette", [["petrol", "Petrol", "#0b6e84"], ["deep", "Tiefblau", "#1f55c4"], ["mint", "Mint", "#0f7a5a"], ["violet", "Violett", "#6d3fc0"]]],
-      ["lookStyle", "style", [["calm", "Ruhig"], ["bold", "Mutig"]]]
+      ["lookStyle", "style", [["calm", "Minimal"], ["bold", "Akzentuiert"]]]
     ];
     groups.forEach(function (g) {
       var box = $(g[0]);
@@ -1737,13 +1738,11 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
     var actions = el("div", "actions");
 
-    var favBtn = el("button", "toggle fav");
+    var favBtn = el("button", "favcorner");
     favBtn.type = "button";
     var heart = markIcon();
-    var favLabel = el("span");
     favBtn.appendChild(heart);
-    favBtn.appendChild(favLabel);
-    actions.appendChild(favBtn);
+    li.appendChild(favBtn);
 
     var colBtn = el("button", "toggle", "Sammlung");
     colBtn.type = "button";
@@ -1857,7 +1856,8 @@ footer { color: var(--muted); font-size: 0.8rem; }
         heart.classList.add("pop");
       }
       favBtn.setAttribute("aria-pressed", on ? "true" : "false");
-      favLabel.textContent = on ? "Favorit" : "Favorisieren";
+      favBtn.setAttribute("aria-label", on ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen");
+      favBtn.title = on ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen";
     }
 
     function afterChange() {
@@ -2363,7 +2363,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     } else if (!shown) {
       var li = document.createElement("li");
       li.appendChild(el("div", "empty", cur.id === FAV
-        ? "Noch keine Favoriten. Tippe bei einem Paper auf „Favorisieren“, dann erscheint es hier."
+        ? "Noch keine Favoriten. Tippe bei einem Paper oben rechts auf das Lesezeichen, dann erscheint es hier."
         : "Diese Sammlung ist noch leer. Bei jedem Paper kannst du über „Sammlung“ festlegen, wo es hinein soll."));
       libList.appendChild(li);
     }
