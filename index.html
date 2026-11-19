@@ -27,8 +27,6 @@
   --warn-bg: #fdeadd;
   --red: #c62828;
   --red-bg: #fde7e7;
-  --heart: #c0264f;
-  --heart-bg: #fde4ea;
   --scrim: rgba(10, 25, 31, 0.45);
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
@@ -54,8 +52,6 @@
     --warn-bg: #3a2616;
     --red: #ff8a80;
     --red-bg: #3d1c1c;
-    --heart: #ff8aa6;
-    --heart-bg: #3b1a25;
     --scrim: rgba(0, 0, 0, 0.6);
     color-scheme: dark;
   }
@@ -80,8 +76,6 @@
   --warn-bg: #3a2616;
   --red: #ff8a80;
   --red-bg: #3d1c1c;
-  --heart: #ff8aa6;
-  --heart-bg: #3b1a25;
   --scrim: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
@@ -411,9 +405,13 @@ button.toggle, button.ghost {
   font-size: 0.9rem;
   font-weight: 600;
 }
-button.fav { display: inline-flex; align-items: center; gap: 6px; color: var(--heart); }
-button.fav[aria-pressed="true"] { background: var(--heart-bg); border-color: var(--heart); }
-button.fav .heart { font-size: 1.05rem; line-height: 1; }
+.actions button.toggle[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); }
+button.fav { display: inline-flex; align-items: center; gap: 6px; }
+button.fav[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.markicon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vertical-align: -2px; margin-right: 6px; }
+button.fav .markicon { margin-right: 0; width: 17px; height: 17px; vertical-align: 0; }
+button.fav[aria-pressed="true"] .markicon, .navitem .markicon, #libTitle .markicon { fill: currentColor; }
+#libTitle .markicon { width: 20px; height: 20px; vertical-align: -1px; color: var(--accent); }
 button.danger { color: var(--warn); }
 button.danger.arm { background: var(--warn-bg); border-color: var(--warn); }
 .abstract { font-size: 0.95rem; line-height: 1.6; max-width: 65ch; border-top: 1px solid var(--line); padding-top: 10px; overflow-wrap: anywhere; }
@@ -623,7 +621,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
   var libStatus = $("libStatus"), sideNav = $("sideNav"), libFilterEl = $("libFilter");
   var sidebar = $("sidebar"), backdrop = $("backdrop"), menuBtn = $("menuBtn");
   var settingsBtn = $("settingsBtn"), keyInput = $("keyInput"), keySave = $("keySave"), keyClear = $("keyClear"), keyState = $("keyState");
-  var VERSION = "Version 2026.11.19-6";
+  var VERSION = "Version 2026.11.19-8";
 
   var state = {
     loading: false, query: "", source: "both", shown: 0, seen: {},
@@ -1042,11 +1040,27 @@ footer { color: var(--muted); font-size: 0.8rem; }
     menuBtn.setAttribute("aria-expanded", "false");
   }
 
-  function navItem(label, count, active, onClick, extraClass) {
+  var MARK_PATH = "M6 3h12v18l-6-4-6 4z";
+  function markIcon() {
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("class", "markicon");
+    svg.setAttribute("aria-hidden", "true");
+    var path = document.createElementNS(NS, "path");
+    path.setAttribute("d", MARK_PATH);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  function navItem(label, count, active, onClick, extraClass, icon) {
     var b = el("button", "navitem" + (active ? " active" : "") + (extraClass ? " " + extraClass : ""));
     b.type = "button";
     if (active) b.setAttribute("aria-current", "page");
-    b.appendChild(el("span", "t", label));
+    var t = el("span", "t");
+    if (icon) t.appendChild(markIcon());
+    t.appendChild(document.createTextNode(label));
+    b.appendChild(t);
     if (count !== null && count !== undefined) b.appendChild(el("span", "n", String(count)));
     b.addEventListener("click", onClick);
     return b;
@@ -1059,12 +1073,12 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
     sideNav.appendChild(el("div", "sidelabel", "Sammlungen"));
     store.collections.forEach(function (c) {
-      var label = c.id === FAV ? "♥ " + c.name : c.name;
+      var label = c.name;
       var active = currentView === "lib" && currentColId === c.id;
       sideNav.appendChild(navItem(label, c.items.length, active, function () {
         currentColId = c.id;
         showView("lib");
-      }));
+      }, null, c.id === FAV));
     });
 
     if (creating) {
@@ -1507,8 +1521,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
     var favBtn = el("button", "toggle fav");
     favBtn.type = "button";
-    var heart = el("span", "heart");
-    heart.setAttribute("aria-hidden", "true");
+    var heart = markIcon();
     var favLabel = el("span");
     favBtn.appendChild(heart);
     favBtn.appendChild(favLabel);
@@ -1619,7 +1632,6 @@ footer { color: var(--muted); font-size: 0.8rem; }
       updateMetaUi();
       var on = inCol(colById(FAV), rec.id);
       favBtn.setAttribute("aria-pressed", on ? "true" : "false");
-      heart.textContent = on ? "♥" : "♡";
       favLabel.textContent = on ? "Favorit" : "Favorisieren";
     }
 
@@ -2014,7 +2026,9 @@ footer { color: var(--muted); font-size: 0.8rem; }
 
   function renderLibraryHead() {
     var cur = colById(currentColId) || store.collections[0];
-    libTitle.textContent = cur.id === FAV ? "♥ " + cur.name : cur.name;
+    libTitle.textContent = "";
+    if (cur.id === FAV) libTitle.appendChild(markIcon());
+    libTitle.appendChild(document.createTextNode(cur.name));
     libCount.textContent = cur.items.length === 1 ? "1 Paper" : cur.items.length + " Paper";
   }
 
@@ -2113,7 +2127,7 @@ footer { color: var(--muted); font-size: 0.8rem; }
     } else if (!shown) {
       var li = document.createElement("li");
       li.appendChild(el("div", "empty", cur.id === FAV
-        ? "Noch keine Favoriten. Tippe bei einem Paper auf das Herz, dann erscheint es hier."
+        ? "Noch keine Favoriten. Tippe bei einem Paper auf „Favorisieren“, dann erscheint es hier."
         : "Diese Sammlung ist noch leer. Bei jedem Paper kannst du über „Sammlung“ festlegen, wo es hinein soll."));
       libList.appendChild(li);
     }
